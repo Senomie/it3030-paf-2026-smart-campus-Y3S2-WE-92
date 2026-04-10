@@ -51,28 +51,6 @@ The assignment requires implementing the following minimum modules. This repo is
 
 > Tip for viva readiness: keep your commit history and endpoint ownership clear per member, as required by the brief.
 
-### Member 4 — suggested daily commits (10–16 April 2026)
-
-**How to use this:** On each day, do the row whose **date matches the calendar**, commit with the suggested subject (or split into smaller commits). Do **not** commit `backend/src/main/resources/application.properties` if it holds real secrets; use `application.example.properties` + environment variables instead.
-
-| Date | Focus (Notifications + OAuth / roles) | Suggested commit subject |
-|------|----------------------------------------|---------------------------|
-| **Thu 10 Apr** | OAuth2 (Google), JWT for `/api/**`, CORS, user sync, `/api/auth/me` | `feat(auth): Google OAuth2, JWT API auth, and current-user endpoint` |
-| **Fri 11 Apr** | Set `app.security.admin-emails` / `app.security.technician-emails` in local config; exercise `PUT /api/admin/users/{id}/role`; document in report | `feat(auth): role bootstrap from config and admin user role endpoint` |
-| **Sat 12 Apr** | Tighten RBAC (`@PreAuthorize`), error responses | `feat(auth): RBAC on admin/booking/ticket endpoints and API errors` |
-| **Sun 13 Apr** | Notification entity + list/mark-read/delete APIs | `feat(notifications): persistence and REST API for user notifications` |
-| **Mon 14 Apr** | Notifications on booking approve/reject | `feat(notifications): notify users on booking decisions` |
-| **Tue 15 Apr** | Notifications on ticket status + comments | `feat(notifications): notify on ticket updates and new comments` |
-| **Wed 16 Apr** | Frontend: login redirect, `/login/success`, notifications panel, route guards | `feat(ui): OAuth callback handling and notification panel` |
-
-**Today (quick pick):**
-
-- **10 Apr →** Finish & push **auth slice**: OAuth2 + JWT + `User` + `GET /api/auth/me` + `application.example.properties` + H2 test config. Run `backend` tests before pushing.
-- **11 Apr →** **Roles:** configure comma-separated emails in local `application.properties`, log in once to verify `ADMIN` / `TECHNICIAN`, test admin **role update** API; update README/report with who is admin.
-- **12 Apr →** Review `@PreAuthorize` on admin/booking/ticket routes; extend `GlobalExceptionHandler` if needed; re-run tests.
-
-If you already implemented several days in one go, either **split into multiple commits** (interactive staging) or make **one honest commit** and use the table in your report to map what you built when.
-
 ### Prerequisites
 
 - **Node.js**: 20+ recommended (CI uses Node 20)
