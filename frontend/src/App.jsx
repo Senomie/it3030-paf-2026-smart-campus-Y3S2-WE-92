@@ -13,6 +13,8 @@ import TechnicianDashboard from './pages/TechnicianDashboard';
 import TicketDetails from './pages/TicketDetails';
 import Notifications from './pages/Notifications';
 import Navbar from './components/Navbar';
+import RoleRoute from './components/RoleRoute';
+import AdminUsers from './pages/AdminUsers';
 
 const PrivateRoute = ({ children }) => {
     const { user, loading } = useContext(AuthContext);
@@ -66,7 +68,9 @@ function App() {
                     } />
                     <Route path="/technician/desk" element={
                         <PrivateRoute>
-                            <TechnicianDashboard />
+                            <RoleRoute allowedRoles={['ROLE_ADMIN', 'ROLE_TECHNICIAN']}>
+                                <TechnicianDashboard />
+                            </RoleRoute>
                         </PrivateRoute>
                     } />
                     <Route path="/notifications" element={
