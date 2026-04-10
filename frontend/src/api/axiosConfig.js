@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_ORIGIN } from '../config/api';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8080/api',
+    baseURL: `${API_ORIGIN}/api`,
 });
 
 // Request Interceptor to attach JWT token

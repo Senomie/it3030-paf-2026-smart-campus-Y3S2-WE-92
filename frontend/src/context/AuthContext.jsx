@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useCallback } from 'react';
 import api from '../api/axiosConfig';
 
 export const AuthContext = createContext();
@@ -29,10 +29,22 @@ export const AuthProvider = ({ children }) => {
         fetchUser();
     }, []);
 
-    const login = (token) => {
+    const login = useCallback(async (token) => {
         localStorage.setItem('jwt_token', token);
-        fetchUser();
-    };
+        setLoading(true);
+        try {
+            const response = await api.get('/auth/me');
+            setUser(response.data);
+            return true;
+        } catch (error) {
+            console.error('Failed to fetch user', error);
+            localStorage.removeItem('jwt_token');
+            setUser(null);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     const logout = () => {
         localStorage.removeItem('jwt_token');

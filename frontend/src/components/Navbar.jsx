@@ -96,7 +96,10 @@ const Navbar = () => {
                 <Link to="/catalogue" style={linkStyle('/catalogue')}>Facilities & Assets</Link>
                 
                 {user.role === 'ROLE_ADMIN' && (
-                    <Link to="/admin/bookings" style={linkStyle('/admin/bookings')}>Manage Bookings</Link>
+                    <>
+                        <Link to="/admin/bookings" style={linkStyle('/admin/bookings')}>Manage Bookings</Link>
+                        <Link to="/admin/users" style={linkStyle('/admin/users')}>Users</Link>
+                    </>
                 )}
                 
                 {(user.role === 'ROLE_TECHNICIAN' || user.role === 'ROLE_ADMIN') && (
