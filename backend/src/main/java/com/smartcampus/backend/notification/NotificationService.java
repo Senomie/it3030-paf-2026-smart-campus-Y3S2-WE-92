@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.smartcampus.backend.notification.dto.NotificationResponse;
+import com.smartcampus.backend.notification.dto.NotificationPreferenceResponse;
 import com.smartcampus.backend.user.Role;
 import com.smartcampus.backend.user.User;
 
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class NotificationService {
 
 	private final NotificationRepository notificationRepository;
+	private final NotificationPreferenceRepository preferenceRepository;
 
 	@Transactional(readOnly = true)
 	public List<NotificationResponse> listForUser(Long principalUserId, Role principalRole, Long requestedUserId) {
@@ -87,5 +89,31 @@ public class NotificationService {
 				.relatedTicketId(ticketId)
 				.build();
 		notificationRepository.save(n);
+	}
+
+	@Transactional(readOnly = true)
+	public List<NotificationPreferenceResponse> getPreferences(Long principalUserId, Role principalRole, Long requestedUserId) {
+		if (!principalUserId.equals(requestedUserId) && principalRole != Role.ADMIN) {
+			throw new SecurityException("Cannot read another user's preferences");
+		}
+		return preferenceRepository.findByUserId(requestedUserId).stream()
+				.map(NotificationPreferenceResponse::from)
+				.toList();
+	}
+
+	@Transactional
+	public NotificationPreferenceResponse updatePreference(Long principalUserId, Role principalRole, Long requestedUserId, NotificationType type, Boolean enabled) {
+		if (!principalUserId.equals(requestedUserId) && principalRole != Role.ADMIN) {
+			throw new SecurityException("Cannot modify another user's preferences");
+		}
+		
+		NotificationPreference pref = preferenceRepository.findByUserIdAndType(requestedUserId, type)
+				.orElse(NotificationPreference.builder()
+						.userId(requestedUserId)
+						.type(type)
+						.build());
+		
+		pref.setEnabled(enabled);
+		return NotificationPreferenceResponse.from(preferenceRepository.save(pref));
 	}
 }
