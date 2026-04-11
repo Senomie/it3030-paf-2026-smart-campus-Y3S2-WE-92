@@ -232,4 +232,3 @@ const btn = {
 
 export default Notifications;
 
-export default Notifications;
