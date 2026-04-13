@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +34,7 @@ public class NotificationController {
 	private final NotificationService notificationService;
 	private final UserRepository userRepository;
 
+	@PreAuthorize("hasAnyRole('USER','ADMIN','TECHNICIAN')")
 	@GetMapping("/user/{userId}")
 	public ResponseEntity<List<NotificationResponse>> listForUser(Authentication auth, @PathVariable Long userId) {
 		if (userId == null || userId <= 0) {
@@ -42,6 +44,7 @@ public class NotificationController {
 		return ResponseEntity.ok(notificationService.listForUser(c.userId(), c.role(), userId));
 	}
 
+	@PreAuthorize("hasAnyRole('USER','ADMIN','TECHNICIAN')")
 	@PatchMapping("/{id}/read")
 	public ResponseEntity<NotificationResponse> markRead(Authentication auth, @PathVariable Long id) {
 		if (id == null || id <= 0) {
@@ -51,6 +54,7 @@ public class NotificationController {
 		return ResponseEntity.ok(notificationService.markRead(c.userId(), c.role(), id));
 	}
 
+	@PreAuthorize("hasAnyRole('USER','ADMIN','TECHNICIAN')")
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> delete(Authentication auth, @PathVariable Long id) {
 		if (id == null || id <= 0) {
@@ -61,6 +65,7 @@ public class NotificationController {
 		return ResponseEntity.noContent().build();
 	}
 
+	@PreAuthorize("hasAnyRole('USER','ADMIN','TECHNICIAN')")
 	@GetMapping("/preferences/{userId}")
 	public ResponseEntity<List<NotificationPreferenceResponse>> getPreferences(Authentication auth, @PathVariable Long userId) {
 		if (userId == null || userId <= 0) {
@@ -70,6 +75,7 @@ public class NotificationController {
 		return ResponseEntity.ok(notificationService.getPreferences(c.userId(), c.role(), userId));
 	}
 
+	@PreAuthorize("hasAnyRole('USER','ADMIN','TECHNICIAN')")
 	@PutMapping("/preferences/{userId}")
 	public ResponseEntity<NotificationPreferenceResponse> updatePreference(
 			Authentication auth,
