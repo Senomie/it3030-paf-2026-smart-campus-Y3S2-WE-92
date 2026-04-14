@@ -93,6 +93,141 @@ const Catalogue = () => {
         }
     };
 
+    // Beautiful Loading Screen Component
+    const LoadingScreen = () => (
+        <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '600px',
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
+            borderRadius: '16px',
+            padding: '40px 20px'
+        }}>
+            <div style={{ textAlign: 'center' }}>
+                {/* Animated Gradient Circle */}
+                <div style={{
+                    position: 'relative',
+                    width: '120px',
+                    height: '120px',
+                    margin: '0 auto 30px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    {/* Outer rotating ring */}
+                    <div style={{
+                        position: 'absolute',
+                        width: '120px',
+                        height: '120px',
+                        borderRadius: '50%',
+                        border: '3px solid transparent',
+                        borderTop: '3px solid var(--primary)',
+                        borderRight: '3px solid rgba(59, 130, 246, 0.3)',
+                        animation: 'spin 1.5s linear infinite'
+                    }}></div>
+
+                    {/* Middle rotating ring (opposite direction) */}
+                    <div style={{
+                        position: 'absolute',
+                        width: '90px',
+                        height: '90px',
+                        borderRadius: '50%',
+                        border: '3px solid transparent',
+                        borderBottom: '3px solid #8B5CF6',
+                        borderLeft: '3px solid rgba(139, 92, 246, 0.3)',
+                        animation: 'spin-reverse 2s linear infinite'
+                    }}></div>
+
+                    {/* Center dot */}
+                    <div style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        background: 'var(--primary)',
+                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)'
+                    }}></div>
+                </div>
+
+                {/* Animated Text */}
+                <h3 style={{
+                    margin: '0 0 10px',
+                    fontSize: '20px',
+                    color: 'var(--text-main)',
+                    fontWeight: '700',
+                    letterSpacing: '0.5px'
+                }}>
+                    Loading Facilities
+                    <span style={{
+                        display: 'inline-block',
+                        marginLeft: '4px',
+                        animation: 'bounce 1.4s infinite'
+                    }}>.</span>
+                    <span style={{
+                        display: 'inline-block',
+                        marginLeft: '4px',
+                        animation: 'bounce 1.4s infinite 0.2s'
+                    }}>.</span>
+                    <span style={{
+                        display: 'inline-block',
+                        marginLeft: '4px',
+                        animation: 'bounce 1.4s infinite 0.4s'
+                    }}>.</span>
+                </h3>
+
+                {/* Subtext */}
+                <p style={{
+                    margin: '15px 0 0',
+                    fontSize: '13px',
+                    color: 'var(--text-muted)',
+                    fontWeight: '500'
+                }}>
+                    Fetching available resources...
+                </p>
+
+                {/* Loading bars */}
+                <div style={{ marginTop: '25px', display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                    {[...Array(3)].map((_, i) => (
+                        <div
+                            key={i}
+                            style={{
+                                width: '8px',
+                                height: '40px',
+                                borderRadius: '4px',
+                                background: `linear-gradient(180deg, var(--primary) 0%, rgba(59, 130, 246, 0.3) 100%)`,
+                                animation: `pulse-height 1.6s ease-in-out infinite`,
+                                animationDelay: `${i * 0.2}s`
+                            }}
+                        ></div>
+                    ))}
+                </div>
+            </div>
+
+            {/* CSS Animations */}
+            <style>{`
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                
+                @keyframes spin-reverse {
+                    from { transform: rotate(360deg); }
+                    to { transform: rotate(0deg); }
+                }
+                
+                @keyframes bounce {
+                    0%, 60%, 100% { transform: translateY(0); opacity: 1; }
+                    30% { transform: translateY(-10px); opacity: 0.7; }
+                }
+                
+                @keyframes pulse-height {
+                    0%, 100% { height: 10px; opacity: 0.5; }
+                    50% { height: 40px; opacity: 1; }
+                }
+            `}</style>
+        </div>
+    );
+
     return (
         <div style={{ padding: '40px 20px', maxWidth: '1400px', margin: '0 auto' }}>
             {/* Header */}
@@ -263,20 +398,9 @@ const Catalogue = () => {
                 </div>
             )}
 
-            {/* Grid */}
+            {/* LOADING SCREEN - Use the new LoadingScreen component */}
             {loading ? (
-                <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${viewMode === 'list' ? '100%' : '280px'}, 1fr))`, gap: '20px' }}>
-                    {[...Array(6)].map((_, i) => (
-                        <div key={i} className="premium-card" style={{ padding: '20px', display: 'flex', gap: '15px' }}>
-                            <div className="skeleton" style={{ flex: '0 0 140px', height: '140px', borderRadius: '10px' }}></div>
-                            <div style={{ flex: 1 }}>
-                                <div className="skeleton" style={{ width: '70%', height: '20px', marginBottom: '12px' }}></div>
-                                <div className="skeleton" style={{ width: '100%', height: '16px', marginBottom: '8px' }}></div>
-                                <div className="skeleton" style={{ width: '85%', height: '16px' }}></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                <LoadingScreen />
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${viewMode === 'list' ? '100%' : '280px'}, 1fr))`, gap: '20px' }}>
                     {resources.filter(res => {
