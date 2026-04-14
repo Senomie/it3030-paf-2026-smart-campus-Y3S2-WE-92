@@ -31,41 +31,97 @@ const ReportIssue = () => {
     };
 
     return (
-        <div className="premium-card" style={{ maxWidth: 560, margin: '24px auto', padding: 28 }}>
-            <h1 style={{ marginTop: 0 }}>Report issue</h1>
-            <p style={{ color: 'var(--text-muted)' }}>{resource}</p>
-            <form onSubmit={submit}>
-                <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Title</label>
-                <input
-                    required
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    style={{ width: '100%', borderRadius: 10, padding: 12, marginBottom: 16, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-main)' }}
-                />
-                <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Description</label>
-                <textarea
-                    required
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={5}
-                    style={{ width: '100%', borderRadius: 10, padding: 12, marginBottom: 20, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-main)' }}
-                />
-                <button
-                    type="submit"
-                    disabled={submitting}
-                    style={{
-                        padding: '12px 20px',
-                        borderRadius: 12,
-                        border: 'none',
-                        background: 'var(--primary)',
-                        color: 'white',
-                        fontWeight: 700,
-                        cursor: submitting ? 'wait' : 'pointer',
-                    }}
-                >
-                    {submitting ? 'Submitting…' : 'Submit ticket'}
-                </button>
-            </form>
+        <div style={{ padding: '0 24px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+            <div className="premium-card" style={{ 
+                maxWidth: 560, 
+                margin: '40px auto', 
+                backgroundColor: '#ffffff', 
+                borderRadius: '12px', 
+                border: '1px solid #e5e7eb', 
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', 
+                padding: '32px' 
+            }}>
+                <header style={{ marginBottom: '24px', borderBottom: '1px solid #f3f4f6', paddingBottom: '16px' }}>
+                    <h1 style={{ margin: '0 0 8px 0', color: '#1a3626', fontSize: '1.75rem', fontWeight: 700 }}>
+                        Report an Issue
+                    </h1>
+                    <p style={{ margin: 0, color: '#6b7280', fontSize: '0.95rem' }}>
+                        Resource: <span style={{ fontWeight: 600, color: '#374151' }}>{resource}</span>
+                    </p>
+                </header>
+
+                <form onSubmit={submit}>
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#4b5563', fontSize: '0.95rem' }}>
+                            Issue Title
+                        </label>
+                        <input
+                            required
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            style={{ 
+                                width: '100%', 
+                                boxSizing: 'border-box',
+                                borderRadius: '8px', 
+                                padding: '12px 16px', 
+                                backgroundColor: '#f9fafb', 
+                                border: '1px solid #d1d5db', 
+                                color: '#1f2937',
+                                fontSize: '1rem',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
+
+                    <div style={{ marginBottom: '24px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#4b5563', fontSize: '0.95rem' }}>
+                            Description
+                        </label>
+                        <textarea
+                            required
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows={5}
+                            placeholder="Please provide as much detail as possible..."
+                            style={{ 
+                                width: '100%', 
+                                boxSizing: 'border-box',
+                                borderRadius: '8px', 
+                                padding: '12px 16px', 
+                                backgroundColor: '#f9fafb', 
+                                border: '1px solid #d1d5db', 
+                                color: '#1f2937',
+                                fontSize: '1rem',
+                                outline: 'none',
+                                resize: 'vertical',
+                                fontFamily: 'inherit'
+                            }}
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        style={{
+                            width: '100%',
+                            padding: '14px 20px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            backgroundColor: submitting ? '#9ca3af' : '#2e8b57',
+                            color: 'white',
+                            fontWeight: 600,
+                            fontSize: '1rem',
+                            cursor: submitting ? 'wait' : 'pointer',
+                            transition: 'background-color 0.2s',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center'
+                        }}
+                    >
+                        {submitting ? 'Submitting...' : 'Submit Ticket'}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };
