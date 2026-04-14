@@ -1,0 +1,400 @@
+{
+  "info": {
+    "_postman_id": "smart-campus-notifications",
+    "name": "Smart Campus - Notifications API",
+    "description": "API collection for Smart Campus Notification Management System\n\nModule D - Notifications & Module E - Authentication endpoints\nImplemented by: Member 4",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get Current User (OAuth 2.0)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get currently authenticated user details\n\nRequired: Valid JWT token from OAuth 2.0 login\nRoles: USER, ADMIN, TECHNICIAN"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/auth/me",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"email\": \"user@example.com\",\n  \"name\": \"John Doe\",\n  \"role\": \"ROLE_USER\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Notifications - CRUD Operations",
+      "item": [
+        {
+          "name": "1. GET - List User Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/user/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "user",
+                "{{user_id}}"
+              ]
+            },
+            "description": "GET /api/notifications/user/{userId}\n\nFetch all notifications for a specific user, ordered by creation time (newest first)\n\nRequired Role: USER, ADMIN, TECHNICIAN\nSecurity: Users can only view their own notifications (unless ADMIN)\n\nPath Parameters:\n- userId: The ID of the user to fetch notifications for\n\nResponse: Array of NotificationResponse objects with fields:\n- id: Notification ID\n- type: BOOKING_APPROVED | BOOKING_REJECTED | TICKET_STATUS | TICKET_COMMENT\n- title: Notification title\n- message: Full notification message\n- read: Boolean indicating if notification was read\n- createdAt: ISO 8601 timestamp\n- relatedBookingId: ID of related booking (if applicable)\n- relatedTicketId: ID of related ticket (if applicable)"
+          },
+          "response": [
+            {
+              "name": "Success - Get Notifications",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/notifications/user/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    "user",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 101,\n    \"type\": \"BOOKING_APPROVED\",\n    \"title\": \"Booking approved\",\n    \"message\": \"Your booking for \\\"Lecture Hall A\\\" was approved.\",\n    \"read\": false,\n    \"createdAt\": \"2026-04-14T10:30:00Z\",\n    \"relatedBookingId\": 5,\n    \"relatedTicketId\": null\n  },\n  {\n    \"id\": 100,\n    \"type\": \"TICKET_STATUS\",\n    \"title\": \"Ticket updated\",\n    \"message\": \"Ticket \\\"Projector not working\\\" is now IN_PROGRESS.\",\n    \"read\": true,\n    \"createdAt\": \"2026-04-13T15:20:00Z\",\n    \"relatedBookingId\": null,\n    \"relatedTicketId\": 8\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "2. PATCH - Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/{{notification_id}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "{{notification_id}}",
+                "read"
+              ]
+            },
+            "description": "PATCH /api/notifications/{id}/read\n\nMark a notification as read. Only the notification owner or ADMIN can mark it as read.\n\nRequired Role: USER, ADMIN, TECHNICIAN\nSecurity: Users can only modify their own notifications (unless ADMIN)\n\nPath Parameters:\n- id: The notification ID to mark as read\n\nResponse: Updated NotificationResponse object with read=true"
+          },
+          "response": [
+            {
+              "name": "Success - Mark as Read",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/notifications/101/read",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    "101",
+                    "read"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 101,\n  \"type\": \"BOOKING_APPROVED\",\n  \"title\": \"Booking approved\",\n  \"message\": \"Your booking for \\\"Lecture Hall A\\\" was approved.\",\n  \"read\": true,\n  \"createdAt\": \"2026-04-14T10:30:00Z\",\n  \"relatedBookingId\": 5,\n  \"relatedTicketId\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "3. DELETE - Remove Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/{{notification_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "{{notification_id}}"
+              ]
+            },
+            "description": "DELETE /api/notifications/{id}\n\nDelete a notification permanently. Only the notification owner or ADMIN can delete it.\n\nRequired Role: USER, ADMIN, TECHNICIAN\nSecurity: Users can only delete their own notifications (unless ADMIN)\n\nPath Parameters:\n- id: The notification ID to delete\n\nResponse: 204 No Content (empty response on success)"
+          },
+          "response": [
+            {
+              "name": "Success - Deleted",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/notifications/101",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    "101"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Notification Preferences",
+      "item": [
+        {
+          "name": "4. GET - Notification Preferences",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/preferences/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "preferences",
+                "{{user_id}}"
+              ]
+            },
+            "description": "GET /api/notifications/preferences/{userId}\n\nFetch notification preferences for a user. Users can control which notification types they want to receive.\n\nRequired Role: USER, ADMIN, TECHNICIAN\nSecurity: Users can only view their own preferences (unless ADMIN)\n\nPath Parameters:\n- userId: The ID of the user to fetch preferences for\n\nResponse: Array of NotificationPreferenceResponse objects with fields:\n- id: Preference ID\n- type: BOOKING_APPROVED | BOOKING_REJECTED | TICKET_STATUS | TICKET_COMMENT\n- enabled: Boolean indicating if this notification type is enabled"
+          },
+          "response": [
+            {
+              "name": "Success - Get Preferences",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/notifications/preferences/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    "preferences",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"type\": \"BOOKING_APPROVED\",\n    \"enabled\": true\n  },\n  {\n    \"id\": 2,\n    \"type\": \"BOOKING_REJECTED\",\n    \"enabled\": true\n  },\n  {\n    \"id\": 3,\n    \"type\": \"TICKET_STATUS\",\n    \"enabled\": true\n  },\n  {\n    \"id\": 4,\n    \"type\": \"TICKET_COMMENT\",\n    \"enabled\": false\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "5. PUT - Update Notification Preference",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"BOOKING_APPROVED\",\n  \"enabled\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/notifications/preferences/{{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "preferences",
+                "{{user_id}}"
+              ]
+            },
+            "description": "PUT /api/notifications/preferences/{userId}\n\nUpdate notification preferences for a user. Enable or disable specific notification types.\n\nRequired Role: USER, ADMIN, TECHNICIAN\nSecurity: Users can only modify their own preferences (unless ADMIN)\n\nPath Parameters:\n- userId: The ID of the user to update preferences for\n\nRequest Body: UpdateNotificationPreferenceRequest\n- type: BOOKING_APPROVED | BOOKING_REJECTED | TICKET_STATUS | TICKET_COMMENT (required)\n- enabled: true | false (required)\n\nResponse: Updated NotificationPreferenceResponse object"
+          },
+          "response": [
+            {
+              "name": "Success - Updated Preference",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"BOOKING_APPROVED\",\n  \"enabled\": false\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/notifications/preferences/1",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    "preferences",
+                    "1"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"type\": \"BOOKING_APPROVED\",\n  \"enabled\": false\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "101",
+      "type": "string"
+    }
+  ]
+}
