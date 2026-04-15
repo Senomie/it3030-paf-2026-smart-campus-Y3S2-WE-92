@@ -8,10 +8,8 @@ import Dashboard from './pages/Dashboard';
 import Catalogue from './pages/Catalogue';
 import BookResource from './pages/BookResource';
 import ManageBookings from './pages/ManageBookings';
-import ReportIssue from './pages/ReportIssue';
-import TechnicianDashboard from './pages/TechnicianDashboard';
-import TicketDetails from './pages/TicketDetails';
 import Notifications from './pages/Notifications';
+import NotificationSettings from './pages/NotificationSettings';
 import Navbar from './components/Navbar';
 import RoleRoute from './components/RoleRoute';
 import AdminUsers from './pages/AdminUsers';
@@ -56,26 +54,21 @@ function App() {
                             <ManageBookings />
                         </PrivateRoute>
                     } />
-                    <Route path="/report/:id" element={
+                    <Route path="/admin/users" element={
                         <PrivateRoute>
-                            <ReportIssue />
-                        </PrivateRoute>
-                    } />
-                    <Route path="/ticket/:id" element={
-                        <PrivateRoute>
-                            <TicketDetails />
-                        </PrivateRoute>
-                    } />
-                    <Route path="/technician/desk" element={
-                        <PrivateRoute>
-                            <RoleRoute allowedRoles={['ROLE_ADMIN', 'ROLE_TECHNICIAN']}>
-                                <TechnicianDashboard />
+                            <RoleRoute allowedRoles={['ROLE_ADMIN']}>
+                                <AdminUsers />
                             </RoleRoute>
                         </PrivateRoute>
                     } />
                     <Route path="/notifications" element={
                         <PrivateRoute>
                             <Notifications />
+                        </PrivateRoute>
+                    } />
+                    <Route path="/notification-settings" element={
+                        <PrivateRoute>
+                            <NotificationSettings />
                         </PrivateRoute>
                     } />
                     
