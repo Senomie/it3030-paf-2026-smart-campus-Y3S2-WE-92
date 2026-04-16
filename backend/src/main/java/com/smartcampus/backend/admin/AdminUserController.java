@@ -2,6 +2,9 @@ package com.smartcampus.backend.admin;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
 
+	private static final Logger logger = LoggerFactory.getLogger(AdminUserController.class);
+
 	private final UserService userService;
 	private final UserRepository userRepository;
 
@@ -37,11 +42,18 @@ public class AdminUserController {
 	 */
 	@GetMapping
 	public ResponseEntity<List<UserResponse>> getAllUsers() {
-		List<User> users = userRepository.findAll();
-		List<UserResponse> responses = users.stream()
-				.map(UserResponse::from)
-				.toList();
-		return ResponseEntity.ok(responses);
+		try {
+			logger.debug("Fetching all users");
+			List<User> users = userRepository.findAll();
+			List<UserResponse> responses = users.stream()
+					.map(UserResponse::from)
+					.toList();
+			logger.debug("Retrieved {} users", responses.size());
+			return ResponseEntity.ok(responses);
+		} catch (Exception e) {
+			logger.error("Error fetching all users", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 
 	/**
@@ -52,8 +64,23 @@ public class AdminUserController {
 	 * @return Updated user response
 	 */
 	@PutMapping("/{id}/role")
-	public UserResponse updateRole(@PathVariable Long id, @Valid @RequestBody UpdateRoleRequest request) {
-		return UserResponse.from(userService.updateRole(id, request.role()));
+	public ResponseEntity<UserResponse> updateRole(@PathVariable Long id, @Valid @RequestBody UpdateRoleRequest request) {
+		try {
+			if (id == null || id <= 0) {
+				logger.warn("Invalid user id for role update: {}", id);
+				return ResponseEntity.badRequest().build();
+			}
+			logger.debug("Updating role for user: {} to: {}", id, request.role());
+			UserResponse response = UserResponse.from(userService.updateRole(id, request.role()));
+			logger.info("User role updated successfully - user: {}, new role: {}", id, request.role());
+			return ResponseEntity.ok(response);
+		} catch (IllegalArgumentException e) {
+			logger.warn("User not found for role update: {}", id);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		} catch (Exception e) {
+			logger.error("Error updating user role: {}", id, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 
 	/**
@@ -64,7 +91,22 @@ public class AdminUserController {
 	 * @return Updated user response
 	 */
 	@PatchMapping("/{id}/role")
-	public UserResponse patchUpdateRole(@PathVariable Long id, @Valid @RequestBody UpdateRoleRequest request) {
-		return UserResponse.from(userService.updateRole(id, request.role()));
+	public ResponseEntity<UserResponse> patchUpdateRole(@PathVariable Long id, @Valid @RequestBody UpdateRoleRequest request) {
+		try {
+			if (id == null || id <= 0) {
+				logger.warn("Invalid user id for role patch: {}", id);
+				return ResponseEntity.badRequest().build();
+			}
+			logger.debug("Patching role for user: {} to: {}", id, request.role());
+			UserResponse response = UserResponse.from(userService.updateRole(id, request.role()));
+			logger.info("User role patched successfully - user: {}, new role: {}", id, request.role());
+			return ResponseEntity.ok(response);
+		} catch (IllegalArgumentException e) {
+			logger.warn("User not found for role patch: {}", id);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		} catch (Exception e) {
+			logger.error("Error patching user role: {}", id, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
 	}
 }

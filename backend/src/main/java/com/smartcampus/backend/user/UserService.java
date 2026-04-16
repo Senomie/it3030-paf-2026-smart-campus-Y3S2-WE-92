@@ -33,13 +33,23 @@ public class UserService {
 		final String finalEmail = email.trim().toLowerCase(Locale.ROOT);
 		String name = oauth2User.getAttribute("name");
 		final String finalName = (name == null || name.isBlank()) ? finalEmail : name;
+		String picture = oauth2User.getAttribute("picture");
+		final String finalPicture = (picture == null || picture.isBlank()) ? null : picture;
 
 		final Set<String> adminEmails = parseEmails(adminEmailsRaw);
 		final Set<String> techEmails = parseEmails(technicianEmailsRaw);
 
 		return userRepository.findByEmail(finalEmail).map(existing -> {
+			boolean updated = false;
 			if (!finalName.equals(existing.getName())) {
 				existing.setName(finalName);
+				updated = true;
+			}
+			if (finalPicture != null && !finalPicture.equals(existing.getProfilePictureUrl())) {
+				existing.setProfilePictureUrl(finalPicture);
+				updated = true;
+			}
+			if (updated) {
 				return userRepository.save(existing);
 			}
 			return existing;
@@ -53,6 +63,7 @@ public class UserService {
 			User u = User.builder()
 					.email(finalEmail)
 					.name(finalName)
+					.profilePictureUrl(finalPicture)
 					.role(role)
 					.build();
 			return userRepository.save(u);
