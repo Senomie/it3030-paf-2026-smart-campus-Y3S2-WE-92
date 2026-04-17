@@ -41,8 +41,8 @@ public class UserService {
 
 		return userRepository.findByEmail(finalEmail).map(existing -> {
 			boolean updated = false;
-			if (!finalName.equals(existing.getName())) {
-				existing.setName(finalName);
+		    if (!finalName.equals(existing.getFullName())) {
+             existing.setFullName(finalName);
 				updated = true;
 			}
 			if (finalPicture != null && !finalPicture.equals(existing.getProfilePictureUrl())) {
@@ -62,7 +62,7 @@ public class UserService {
 			}
 			User u = User.builder()
 					.email(finalEmail)
-					.name(finalName)
+					.fullName(finalName)
 					.profilePictureUrl(finalPicture)
 					.role(role)
 					.build();
