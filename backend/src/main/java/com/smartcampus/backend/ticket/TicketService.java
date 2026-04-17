@@ -124,11 +124,11 @@ public class TicketService {
 		User author = userRepository.findById(authorId).orElseThrow();
 		if (!t.getReporterId().equals(authorId)) {
 			userRepository.findById(t.getReporterId()).ifPresent(u -> notificationService
-					.notifyTicketComment(u, t.getId(), t.getTitle(), author.getName()));
+					.notifyTicketComment(u, t.getId(), t.getTitle(), author.getFullName()));
 		}
 		if (t.getAssigneeId() != null && !t.getAssigneeId().equals(authorId)) {
 			userRepository.findById(t.getAssigneeId()).ifPresent(u -> notificationService
-					.notifyTicketComment(u, t.getId(), t.getTitle(), author.getName()));
+					.notifyTicketComment(u, t.getId(), t.getTitle(), author.getFullName()));
 		}
 	}
 
