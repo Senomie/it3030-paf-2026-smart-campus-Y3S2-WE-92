@@ -35,13 +35,16 @@ public class BookingService {
 			throw new IllegalStateException("Resource is already booked for this time range");
 		}
 		Booking b = Booking.builder()
-				.userId(userId)
-				.resourceLabel(req.resourceLabel().trim())
-				.purpose(req.purpose().trim())
-				.startTime(req.startTime())
-				.endTime(req.endTime())
-				.status(BookingStatus.PENDING)
-				.build();
+		    .userId(userId)
+            .resourceLabel(req.resourceLabel().trim())
+            .purpose(req.purpose().trim())
+            .startTime(req.startTime())
+            .endTime(req.endTime())
+            .status(BookingStatus.PENDING)
+            .recurrence(req.recurrence() != null ? req.recurrence() : BookingRecurrence.SINGLE)
+            .fullName(req.fullName())       // ADD
+            .phoneNumber(req.phoneNumber()) // ADD
+            .build();
 		return BookingResponse.from(bookingRepository.save(b));
 	}
 
@@ -58,6 +61,20 @@ public class BookingService {
 				.map(BookingResponse::from)
 				.toList();
 	}
+
+	 @Transactional(readOnly = true)
+    public List<BookingResponse> getByResourceLabel(String resourceLabel) {
+        return bookingRepository.findByResourceLabel(resourceLabel).stream()
+                .map(BookingResponse::from)
+                .toList();
+    }
+	@Transactional(readOnly = true)
+	public List<BookingResponse> listAll(BookingStatus status) {
+    List<Booking> result = status != null
+        ? bookingRepository.findByStatusOrderByStartTimeDesc(status)
+        : bookingRepository.findAllByOrderByStartTimeDesc();
+    return result.stream().map(BookingResponse::from).toList();
+}
 
 	@Transactional
 	public BookingResponse decide(Long bookingId, boolean approved, String reason) {
