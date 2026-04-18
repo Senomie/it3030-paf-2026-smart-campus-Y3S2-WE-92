@@ -2,6 +2,7 @@ package com.smartcampus.backend.booking;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.smartcampus.backend.booking.dto.BookingDecisionRequest;
@@ -43,6 +45,17 @@ public class BookingController {
 	public List<BookingResponse> pending() {
 		return bookingService.listPending();
 	}
+
+	@GetMapping
+    public ResponseEntity<?> getBookings(@RequestParam String resourceLabel) {
+    return ResponseEntity.ok(bookingService.getByResourceLabel(resourceLabel));
+  }
+     
+   @GetMapping("/all")
+   @PreAuthorize("hasRole('ADMIN')")
+   public ResponseEntity<List<BookingResponse>> getAll(
+   @RequestParam(required = false) BookingStatus status) {
+   return ResponseEntity.ok(bookingService.listAll(status));}
 
 	@PatchMapping("/{id}/decision")
 	@PreAuthorize("hasRole('ADMIN')")
