@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import { AuthContext } from '../context/AuthContext';
 import { NotificationContext } from '../context/NotificationContext';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const TicketDetails = () => {
     const { id } = useParams();
@@ -14,6 +15,8 @@ const TicketDetails = () => {
     const [comments, setComments] = useState([]);
     const [attachments, setAttachments] = useState([]);
     const [newComment, setNewComment] = useState('');
+    const [deleteCommentDialog, setDeleteCommentDialog] = useState({ open: false, commentId: null });
+    const [statusDialog, setStatusDialog] = useState({ open: false, newStatus: null });
 
     const fetchData = useCallback(async () => {
         try {
@@ -52,7 +55,12 @@ const TicketDetails = () => {
     };
 
     const handleDeleteComment = async (cid) => {
-        if (!window.confirm("Delete this comment permanently?")) return;
+        setDeleteCommentDialog({ open: true, commentId: cid });
+    };
+
+    const confirmDeleteComment = async () => {
+        const cid = deleteCommentDialog.commentId;
+        setDeleteCommentDialog({ open: false, commentId: null });
         try {
             await api.delete(`/tickets/comments/${cid}`);
             fetchData();
@@ -63,6 +71,7 @@ const TicketDetails = () => {
     if (!ticket) return <div style={{padding: '50px'}}>Loading...</div>;
 
     return (
+        <>
         <div style={{ maxWidth: '900px', margin: '40px auto', padding: '0 20px' }}>
             <button 
                 onClick={() => navigate(-1)} 
@@ -76,7 +85,7 @@ const TicketDetails = () => {
             </button>
             
             <div className="premium-card" style={{ padding: '0', overflow: 'hidden' }}>
-                <div style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', padding: '40px', color: 'white' }}>
+                <div style={{ background: '#1a1a1a', padding: '40px', color: 'white' }}>
                     <div style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '10px', opacity: 0.8 }}>Ticket Details</div>
                     {/* FIX 3: Use ticket.title since category no longer exists as a separate column */}
                     <h2 style={{ margin: 0, fontSize: '32px', letterSpacing: '-1px', lineHeight: '1.2' }}>#{ticket.id}: {ticket.title}</h2>
@@ -94,26 +103,18 @@ const TicketDetails = () => {
 
             {user.role !== 'ROLE_USER' && (
                 <div style={{
-                    marginTop: '20px', padding: '25px', 
-                    background: 'rgba(59, 130, 246, 0.03)', 
-                    borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.2)',
+                    marginTop: '20px', padding: '20px', 
+                    background: '#f5f5f5', 
+                    borderRadius: '10px', border: '1px solid #dddddd',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     gap: '20px'
                 }}>
                     <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-muted)' }}>
                         🛠️ <span style={{color: 'var(--primary)'}}>Technician Control</span> • Override Status
                     </label>
-                    <select value={ticket.status} className="premium-input" style={{ width: 'auto', padding: '8px 40px 8px 15px', margin: 0 }} onChange={async (e) => {
+                    <select value={ticket.status} className="premium-input" style={{ width: 'auto', padding: '8px 40px 8px 15px', margin: 0 }} onChange={(e) => {
                         const newStatus = e.target.value;
-                        if (!window.confirm(`Are you sure you want to change the status to ${newStatus}?`)) return;
-                        
-                        try {
-                            // FIX 5: Use api.patch to match the @PatchMapping in Java!
-                            // We also removed resolutionNotes since it was dropped from the database.
-                            await api.patch(`/tickets/${ticket.id}/status`, { status: newStatus });
-                            fetchData();
-                            showNotification(`Ticket successfully marked as ${newStatus}`, 'success');
-                        } catch (err) { showNotification('Status Update Failed', 'error'); }
+                        setStatusDialog({ open: true, newStatus });
                     }}>
                         <option value="OPEN">OPEN</option>
                         <option value="IN_PROGRESS">IN PROGRESS</option>
@@ -161,10 +162,10 @@ const TicketDetails = () => {
                             {comments.length === 0 ? (
                                 <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px', background: 'rgba(255,255,255,0.01)', borderRadius: '16px', border: '1px dashed var(--border)' }}>No comments yet.</p>
                             ) : comments.map(c => (
-                                <div key={c.id} style={{ padding: '20px', background: c.user?.id === user.id ? 'rgba(59, 130, 246, 0.05)' : 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+                                <div key={c.id} style={{ padding: '18px 20px', background: c.user?.id === user.id ? '#f5f5f5' : '#ffffff', borderRadius: '10px', border: '1px solid #dddddd' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
                                         <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                            <div style={{width: '32px', height: '32px', background: '#3b82f6', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold'}}>
+                                            <div style={{width: '30px', height: '30px', background: '#1a1a1a', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 'bold', color: 'white'}}>
                                                 {c.authorId ? 'U' : 'A'} {/* Fallback if full user object isn't returned */}
                                             </div>
                                             <strong>User #{c.authorId}</strong>
@@ -182,7 +183,7 @@ const TicketDetails = () => {
                                 className="premium-input"
                                 style={{ resize: 'vertical' }} />
                             <button type="submit" style={{ 
-                                alignSelf: 'flex-start', padding: '12px 30px', background: 'var(--primary)', 
+                                alignSelf: 'flex-start', padding: '12px 30px', background: '#16a34a', 
                                 color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', 
                                 fontWeight: '700', fontSize: '14px', transition: 'all 0.2s' 
                             }}>
@@ -193,6 +194,35 @@ const TicketDetails = () => {
                 </div>
             </div>
         </div>
+
+        <ConfirmDialog
+            open={deleteCommentDialog.open}
+            title="Delete Comment"
+            message="Are you sure you want to permanently delete this comment?"
+            confirmLabel="Delete"
+            danger={true}
+            onConfirm={confirmDeleteComment}
+            onCancel={() => setDeleteCommentDialog({ open: false, commentId: null })}
+        />
+
+        <ConfirmDialog
+            open={statusDialog.open}
+            title="Change Ticket Status"
+            message={`Are you sure you want to change the status to "${statusDialog.newStatus}"?`}
+            confirmLabel="Yes, change it"
+            danger={false}
+            onConfirm={async () => {
+                const newStatus = statusDialog.newStatus;
+                setStatusDialog({ open: false, newStatus: null });
+                try {
+                    await api.patch(`/tickets/${ticket.id}/status`, { status: newStatus });
+                    fetchData();
+                    showNotification(`Ticket successfully marked as ${newStatus}`, 'success');
+                } catch (err) { showNotification('Status Update Failed', 'error'); }
+            }}
+            onCancel={() => setStatusDialog({ open: false, newStatus: null })}
+        />
+        </>
     );
 };
 

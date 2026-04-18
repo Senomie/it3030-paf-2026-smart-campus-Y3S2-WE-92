@@ -1,0 +1,390 @@
+{
+  "info": {
+    "_postman_id": "admin-oauth-collection-v2",
+    "name": "Smart Campus - Admin & OAuth API",
+    "description": "Comprehensive testing collection for Member 4 admin user management endpoints and OAuth2 authentication flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "item": [
+      {
+        "name": "OAuth2 Authentication",
+        "item": [
+          {
+            "name": "1. Start OAuth2 Flow",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "http://localhost:8080/oauth2/authorization/google",
+                "protocol": "http",
+                "host": ["localhost"],
+                "port": "8080",
+                "path": ["oauth2", "authorization", "google"]
+              },
+              "description": "Initiates Google OAuth2 login flow. Open this URL in browser and authenticate with your Google account."
+            }
+          },
+          {
+            "name": "2. Extract Token from Redirect",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "http://localhost:5173/login/success?token={{jwt_token}}",
+                "protocol": "http",
+                "host": ["localhost"],
+                "port": "5173",
+                "path": ["login", "success"],
+                "query": [
+                  {
+                    "key": "token",
+                    "value": "{{jwt_token}}"
+                  }
+                ]
+              },
+              "description": "Copy the JWT token from this URL after successful OAuth2 login and paste it in the jwt_token environment variable"
+            }
+          },
+          {
+            "name": "3. Verify Token (Get Preferences)",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{jwt_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/notifications/preferences/{{user_id}}",
+                "host": ["{{base_url}}"],
+                "path": ["api", "notifications", "preferences", "{{user_id}}"]
+              },
+              "description": "Verifies JWT token is valid by making an authenticated API call"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Admin: User Management",
+        "item": [
+          {
+            "name": "GET - List All Users",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Verify response status\npm.test('Response status is 200', function () {\n    pm.response.to.have.status(200);\n});\n\n// Verify response is array\npm.test('Response is array of users', function () {\n    let jsonData = pm.response.json();\n    pm.expect(jsonData).to.be.an('array');\n});\n\n// Verify user structure\nif (pm.response.json().length > 0) {\n    pm.test('User object has required fields', function () {\n        let user = pm.response.json()[0];\n        pm.expect(user).to.have.property('id');\n        pm.expect(user).to.have.property('email');\n        pm.expect(user).to.have.property('name');\n        pm.expect(user).to.have.property('role');\n    });\n}\n\n// Store first user ID for subsequent tests\nif (pm.response.json().length > 0) {\n    pm.environment.set('admin_user_id', pm.response.json()[0].id);\n}"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{jwt_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/admin/users",
+                "host": ["{{base_url}}"],
+                "path": ["api", "admin", "users"]
+              },
+              "description": "Lists all users in the system (ADMIN role required)"
+            }
+          },
+          {
+            "name": "PUT - Update User Role",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Verify response status\npm.test('Response status is 200', function () {\n    pm.response.to.have.status(200);\n});\n\n// Verify updated role\npm.test('User role updated to TECHNICIAN', function () {\n    let jsonData = pm.response.json();\n    pm.expect(jsonData.role).to.equal('TECHNICIAN');\n});\n\n// Verify response structure\npm.test('Response contains user data', function () {\n    let jsonData = pm.response.json();\n    pm.expect(jsonData).to.have.property('id');\n    pm.expect(jsonData).to.have.property('email');\n    pm.expect(jsonData).to.have.property('name');\n    pm.expect(jsonData).to.have.property('role');\n});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{jwt_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"role\": \"TECHNICIAN\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/admin/users/{{admin_user_id}}/role",
+                "host": ["{{base_url}}"],
+                "path": ["api", "admin", "users", "{{admin_user_id}}", "role"]
+              },
+              "description": "Updates a user's role to TECHNICIAN using PUT method. Admin-only endpoint."
+            }
+          },
+          {
+            "name": "PATCH - Update User Role (Alternative)",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Verify response status\npm.test('Response status is 200', function () {\n    pm.response.to.have.status(200);\n});\n\n// Verify updated role\npm.test('User role updated to ADMIN', function () {\n    let jsonData = pm.response.json();\n    pm.expect(jsonData.role).to.equal('ADMIN');\n});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{jwt_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"role\": \"ADMIN\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/admin/users/{{admin_user_id}}/role",
+                "host": ["{{base_url}}"],
+                "path": ["api", "admin", "users", "{{admin_user_id}}", "role"]
+              },
+              "description": "Updates a user's role to ADMIN using PATCH method. Demonstrates semantic HTTP method equivalence."
+            }
+          }
+        ]
+      },
+      {
+        "name": "Notifications: Core Endpoints",
+        "item": [
+          {
+            "name": "GET - List User Notifications",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Response status is 200', function () {\n    pm.response.to.have.status(200);\n});\n\npm.test('Response is array', function () {\n    let jsonData = pm.response.json();\n    pm.expect(jsonData).to.be.an('array');\n});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{jwt_token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/notifications/user/{{user_id}}",
+                "host": ["{{base_url}}"],
+                "path": ["api", "notifications", "user", "{{user_id}}"]
+              },
+              "description": "Retrieves all notifications for a specific user"
+            }
+          },
+          {
+            "name": "PATCH - Mark Notification as Read",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{jwt_token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/notifications/1/read",
+                "host": ["{{base_url}}"],
+                "path": ["api", "notifications", "1", "read"]
+              },
+              "description": "Marks a notification as read. Use notification ID from GET list."
+            }
+          },
+          {
+            "name": "DELETE - Delete Notification",
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{jwt_token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/notifications/1",
+                "host": ["{{base_url}}"],
+                "path": ["api", "notifications", "1"]
+              },
+              "description": "Deletes a notification permanently"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Error Scenarios",
+        "item": [
+          {
+            "name": "401 - Missing Authorization Header",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Response status is 401 Unauthorized', function () {\n    pm.response.to.have.status(401);\n});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{base_url}}/api/admin/users",
+                "host": ["{{base_url}}"],
+                "path": ["api", "admin", "users"]
+              },
+              "description": "Tests endpoint without Authorization header. Should fail with 401."
+            }
+          },
+          {
+            "name": "400 - Invalid User ID Parameter",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Response status indicates error', function () {\n    pm.expect(pm.response.code).to.be.oneOf([400, 404, 500]);\n});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{jwt_token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/notifications/user/invalid",
+                "host": ["{{base_url}}"],
+                "path": ["api", "notifications", "user", "invalid"]
+              },
+              "description": "Tests with invalid user ID. Should fail with 400 Bad Request."
+            }
+          },
+          {
+            "name": "404 - User Not Found (Admin)",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Response status is 404 Not Found', function () {\n    pm.response.to.have.status(404);\n});"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{jwt_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"role\": \"ADMIN\"\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/admin/users/99999/role",
+                "host": ["{{base_url}}"],
+                "path": ["api", "admin", "users", "99999", "role"]
+              },
+              "description": "Tests with non-existent user ID. Should return 404."
+            }
+          }
+        ]
+      }
+    ],
+    "event": [
+      {
+        "listen": "prerequest",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "// Setup base URL if not already set\nif (!pm.environment.get('base_url')) {\n    pm.environment.set('base_url', 'http://localhost:8080');\n}\n\nif (!pm.environment.get('user_id')) {\n    pm.environment.set('user_id', '1');\n}"
+          ]
+        }
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:8080",
+        "type": "string"
+      },
+      {
+        "key": "jwt_token",
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "user_id",
+        "value": "1",
+        "type": "string"
+      },
+      {
+        "key": "admin_user_id",
+        "value": "",
+        "type": "string"
+      }
+    ]
+  }
+}
