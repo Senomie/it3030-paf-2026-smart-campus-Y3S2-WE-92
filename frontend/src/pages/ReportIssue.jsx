@@ -7,11 +7,12 @@ import { NotificationContext } from '../context/NotificationContext';
 const ReportIssue = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useContext(AuthContext);
+    const { user } = useContext(AuthContext); 
     const { showNotification } = useContext(NotificationContext);
     const [resource, setResource] = useState(null);
     const [formData, setFormData] = useState({ category: 'IT_EQUIPMENT', priority: 'MEDIUM', description: '', contactDetails: '' });
     const [files, setFiles] = useState([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         api.get(`/resources/${id}`).then(res => setResource(res.data)).catch(err => console.error(err));
@@ -19,37 +20,58 @@ const ReportIssue = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
         if (!formData.description.trim() || !formData.contactDetails.trim()) {
             showNotification('Please fill in all required fields properly.', 'error');
             return;
         }
+        if (files.length > 3) {
+            showNotification('Maximum 3 attachments allowed.', 'error');
+            return;
+        }
+
+        setIsSubmitting(true);
+        let ticketId = null;
+
+        // STEP 1: CREATE THE TICKET FIRST
         try {
-            if (files.length > 3) {
-                showNotification('Maximum 3 attachments allowed.', 'error');
-                return;
-            }
+            const formattedTitle = `[${formData.category}] Issue with ${resource?.name || `Resource #${id}`}`;
+            const formattedDescription = `Priority: ${formData.priority}\nContact: ${formData.contactDetails}\n\nDetails:\n${formData.description}`;
 
             const res = await api.post('/tickets', {
-                creatorId: user.id,
-                resourceId: Number(id),
-                category: formData.category,
-                priority: formData.priority,
-                description: formData.description,
-                contactDetails: formData.contactDetails
+                title: formattedTitle,
+                description: formattedDescription,
+                resourceId: Number(id)
             });
-            const ticketId = res.data.id;
-
-            for (const file of files) {
-                const fd = new FormData();
-                fd.append('file', file);
-                await api.post(`/tickets/${ticketId}/attachments`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-            }
-
-            showNotification('Incident Ticket and attachments submitted successfully!', 'success');
-            navigate('/dashboard');
+            
+            ticketId = res.data.id;
         } catch (err) {
-            showNotification(err.response?.data?.message || 'Failed to submit ticket.', 'error');
+            showNotification(err.response?.data?.message || 'Failed to create ticket.', 'error');
+            setIsSubmitting(false);
+            return;
         }
+
+        // STEP 2: UPLOAD ATTACHMENTS
+        if (files.length > 0 && ticketId) {
+            try {
+                for (const file of files) {
+                    const fd = new FormData();
+                    fd.append('file', file); 
+                    
+                    // ⭐ THE FIX: Removed the manual headers so the browser can attach the boundary properly!
+                    await api.post(`/tickets/${ticketId}/attachments`, fd);
+                }
+                showNotification('Incident Ticket and attachments submitted successfully!', 'success');
+            } catch (err) {
+                console.error("Attachment upload error:", err);
+                showNotification('Ticket created, but failed to upload some attachments.', 'error');
+            }
+        } else {
+            showNotification('Incident Ticket submitted successfully!', 'success');
+        }
+        
+        setIsSubmitting(false);
+        navigate('/dashboard');
     };
 
     if (!resource) return (
@@ -62,6 +84,7 @@ const ReportIssue = () => {
         <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px' }}>
             <button 
                 onClick={() => navigate('/catalogue')}
+                disabled={isSubmitting}
                 style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 'bold', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}
             >
                 &larr; Back to Catalogue
@@ -134,18 +157,15 @@ const ReportIssue = () => {
                         </div>
 
                         <div style={{ display: 'flex', gap: '15px' }}>
-                            <button type="submit" style={{ 
-                                flex: 2, padding: '16px', background: '#ef4444', color: 'white', 
-                                border: 'none', borderRadius: '14px', cursor: 'pointer', fontSize: '16px', 
+                            <button type="submit" disabled={isSubmitting} style={{ 
+                                flex: 2, padding: '16px', background: isSubmitting ? '#f87171' : '#ef4444', color: 'white', 
+                                border: 'none', borderRadius: '14px', cursor: isSubmitting ? 'wait' : 'pointer', fontSize: '16px', 
                                 fontWeight: '700', boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3)',
                                 transition: 'all 0.2s'
-                            }}
-                            onMouseOver={e => e.target.style.transform = 'translateY(-2px)'}
-                            onMouseOut={e => e.target.style.transform = 'translateY(0)'}
-                            >
-                                Submit Incident Ticket
+                            }}>
+                                {isSubmitting ? 'Uploading...' : 'Submit Incident Ticket'}
                             </button>
-                            <button type="button" onClick={() => navigate('/catalogue')} style={{ 
+                            <button type="button" disabled={isSubmitting} onClick={() => navigate('/catalogue')} style={{ 
                                 flex: 1, padding: '16px', background: 'var(--surface)', color: 'var(--text-muted)', 
                                 border: '1px solid var(--border)', borderRadius: '14px', cursor: 'pointer', fontSize: '16px', 
                                 fontWeight: '700' 
