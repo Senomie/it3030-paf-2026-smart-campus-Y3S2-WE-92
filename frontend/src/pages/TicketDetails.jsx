@@ -17,12 +17,20 @@ const TicketDetails = () => {
 
     const fetchData = useCallback(async () => {
         try {
-            const tRes = await api.get(`/tickets/${id}`);
-            setTicket(tRes.data);
-            const cRes = await api.get(`/tickets/${id}/comments`);
-            setComments(cRes.data);
-            const aRes = await api.get(`/tickets/${id}/attachments`);
-            setAttachments(aRes.data);
+            // FIX 1: The backend returns BOTH the ticket and comments in one single object
+            const response = await api.get(`/tickets/${id}`);
+            setTicket(response.data.ticket);
+            setComments(response.data.comments || []);
+            
+            // Note: If you haven't built a GET attachments endpoint in Java, 
+            // we wrap this in a try/catch so it doesn't crash the whole page if it fails.
+            try {
+                const aRes = await api.get(`/tickets/${id}/attachments`);
+                setAttachments(aRes.data);
+            } catch (attErr) {
+                console.log("Attachments endpoint not found or empty.");
+            }
+            
         } catch(err) {
             showNotification('Error loading ticket details', 'error');
         }
@@ -34,7 +42,9 @@ const TicketDetails = () => {
         e.preventDefault();
         if (!newComment.trim()) return;
         try {
-            await api.post(`/tickets/${id}/comments`, { userId: user.id, content: newComment });
+            // FIX 2: The Java AddCommentRequest expects a field called 'body', not 'content'
+            // The backend automatically extracts the user ID from the JWT token, so we don't send it.
+            await api.post(`/tickets/${id}/comments`, { body: newComment });
             setNewComment('');
             fetchData();
             showNotification('Comment posted', 'success');
@@ -44,7 +54,7 @@ const TicketDetails = () => {
     const handleDeleteComment = async (cid) => {
         if (!window.confirm("Delete this comment permanently?")) return;
         try {
-            await api.delete(`/tickets/comments/${cid}/user/${user.id}`);
+            await api.delete(`/tickets/comments/${cid}`);
             fetchData();
             showNotification('Comment deleted', 'success');
         } catch(e) { showNotification('Failed to delete comment', 'error'); }
@@ -62,35 +72,25 @@ const TicketDetails = () => {
                     display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' 
                 }}
             >
-                &larr; Back to Details
+                &larr; Back to Dashboard
             </button>
             
             <div className="premium-card" style={{ padding: '0', overflow: 'hidden' }}>
                 <div style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', padding: '40px', color: 'white' }}>
                     <div style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '10px', opacity: 0.8 }}>Ticket Details</div>
-                    <h2 style={{ margin: 0, fontSize: '32px', letterSpacing: '-1px' }}>#{ticket.id}: {ticket.category} Issue</h2>
+                    {/* FIX 3: Use ticket.title since category no longer exists as a separate column */}
+                    <h2 style={{ margin: 0, fontSize: '32px', letterSpacing: '-1px', lineHeight: '1.2' }}>#{ticket.id}: {ticket.title}</h2>
                     <div style={{ display: 'flex', gap: '20px', marginTop: '20px', fontSize: '14px', opacity: 0.9 }}>
-                        <span style={{ padding: '6px 16px', background: 'rgba(255,255,255,0.15)', borderRadius: '20px' }}>Status: <strong>{ticket.status}</strong></span>
-                        <span style={{ padding: '6px 16px', background: 'rgba(255,255,255,0.15)', borderRadius: '20px' }}>Priority: <strong>{ticket.priority}</strong></span>
+                        <span style={{ padding: '6px 16px', background: 'rgba(255,255,255,0.15)', borderRadius: '20px' }}>Status: <strong>{ticket.status.replace('_', ' ')}</strong></span>
                     </div>
                 </div>
 
                 <div style={{ padding: '40px' }}>
                     <div style={{ background: 'rgba(255,255,255,0.02)', padding: '25px', borderRadius: '16px', border: '1px solid var(--border)', marginBottom: '30px' }}>
                         <h4 style={{ margin: '0 0 15px 0', color: 'var(--primary)', fontSize: '14px', textTransform: 'uppercase' }}>Description & Information</h4>
-                        <p style={{ margin: '0 0 20px 0', lineHeight: 1.6, color: 'var(--text)' }}>{ticket.description}</p>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>📍 Resource: <strong style={{color: 'var(--text)'}}>{ticket.resource?.name}</strong></span>
-                            <span style={{ color: 'var(--text-muted)' }}>📞 Contact: <strong style={{color: 'var(--text)'}}>{ticket.contactDetails}</strong></span>
-                        </div>
+                        {/* FIX 4: whiteSpace pre-wrap ensures our formatted description shows line breaks correctly */}
+                        <p style={{ margin: '0 0 20px 0', lineHeight: 1.6, color: 'var(--text)', whiteSpace: 'pre-wrap' }}>{ticket.description}</p>
                     </div>
-
-                    {ticket.resolutionNotes && (
-                        <div style={{ padding: '20px', background: 'rgba(34, 197, 94, 0.05)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '16px', marginBottom: '30px' }}>
-                            <h4 style={{ margin: '0 0 10px 0', color: '#22c55e', fontSize: '13px', textTransform: 'uppercase' }}>Resolution Notes</h4>
-                            <p style={{ margin: 0, color: '#22c55e', fontWeight: '500' }}>{ticket.resolutionNotes}</p>
-                        </div>
-                    )}
 
             {user.role !== 'ROLE_USER' && (
                 <div style={{
@@ -105,20 +105,18 @@ const TicketDetails = () => {
                     </label>
                     <select value={ticket.status} className="premium-input" style={{ width: 'auto', padding: '8px 40px 8px 15px', margin: 0 }} onChange={async (e) => {
                         const newStatus = e.target.value;
-                        let notes = ticket.resolutionNotes || '';
-                        if (newStatus === 'REJECTED' || newStatus === 'CLOSED' || newStatus === 'RESOLVED') {
-                            const res = prompt(`Enter ${newStatus.toLowerCase()} notes/reason:`, notes);
-                            if (res === null) return;
-                            notes = res;
-                        }
+                        if (!window.confirm(`Are you sure you want to change the status to ${newStatus}?`)) return;
+                        
                         try {
-                            await api.put(`/tickets/${ticket.id}/status`, { status: newStatus, resolutionNotes: notes });
+                            // FIX 5: Use api.patch to match the @PatchMapping in Java!
+                            // We also removed resolutionNotes since it was dropped from the database.
+                            await api.patch(`/tickets/${ticket.id}/status`, { status: newStatus });
                             fetchData();
                             showNotification(`Ticket successfully marked as ${newStatus}`, 'success');
                         } catch (err) { showNotification('Status Update Failed', 'error'); }
                     }}>
                         <option value="OPEN">OPEN</option>
-                        <option value="IN_PROGRESS">IN_PROGRESS</option>
+                        <option value="IN_PROGRESS">IN PROGRESS</option>
                         <option value="RESOLVED">RESOLVED</option>
                         <option value="CLOSED">CLOSED</option>
                         <option value="REJECTED">REJECTED</option>
@@ -157,7 +155,7 @@ const TicketDetails = () => {
                 </div>
             )}
             
-                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: '40px' }}>
+                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: '40px', marginTop: '40px' }}>
                         <h3 style={{ margin: '0 0 25px 0', fontSize: '20px', letterSpacing: '-0.5px' }}>Comments & Updates</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
                             {comments.length === 0 ? (
@@ -167,18 +165,13 @@ const TicketDetails = () => {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
                                         <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
                                             <div style={{width: '32px', height: '32px', background: '#3b82f6', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold'}}>
-                                                {c.user?.name?.charAt(0) || 'U'}
+                                                {c.authorId ? 'U' : 'A'} {/* Fallback if full user object isn't returned */}
                                             </div>
-                                            <strong>{c.user?.name || 'User'} <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'normal', textTransform: 'uppercase', marginLeft: '5px' }}>({c.user?.role.replace('ROLE_', '')})</span></strong>
+                                            <strong>User #{c.authorId}</strong>
                                         </div>
                                         <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(c.createdAt).toLocaleString()}</span>
                                     </div>
-                                    <p style={{ margin: '0 0 15px 0', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{c.content}</p>
-                                    {c.user?.id === user.id && (
-                                        <button onClick={() => handleDeleteComment(c.id)} style={{ fontSize: '12px', color: '#ef4444', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontWeight: 'bold', opacity: 0.8 }}>
-                                            &times; Delete Comment
-                                        </button>
-                                    )}
+                                    <p style={{ margin: '0 0 15px 0', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{c.body}</p>
                                 </div>
                             ))}
                         </div>

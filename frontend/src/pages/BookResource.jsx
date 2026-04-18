@@ -2,12 +2,15 @@ import React, { useContext, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import { NotificationContext } from '../context/NotificationContext';
+import { AuthContext } from '../context/AuthContext'; // 1. IMPORT AUTH CONTEXT
 
 const BookResource = () => {
     const { id } = useParams();
     const resourceLabel = id ? decodeURIComponent(id) : '';
     const navigate = useNavigate();
     const { showNotification } = useContext(NotificationContext);
+    const { user } = useContext(AuthContext); // 2. GET THE LOGGED-IN USER
+
     const [purpose, setPurpose] = useState('');
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
@@ -18,6 +21,8 @@ const BookResource = () => {
         setSubmitting(true);
         try {
             await api.post('/bookings', {
+                resourceId: Number(id),
+                userId: user?.id, // 3. SEND THE USER ID TO THE BACKEND
                 resourceLabel,
                 purpose,
                 startTime: new Date(startTime).toISOString(),
