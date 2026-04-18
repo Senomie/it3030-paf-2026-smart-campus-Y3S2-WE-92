@@ -88,20 +88,37 @@ public class TicketService {
         return TicketResponse.from(t);
     }
     
+    // ⭐ UPGRADED DIAGNOSTIC CLAIM SAVING ⭐
     @Transactional
     public TicketResponse assignTicket(Long ticketId, Long assigneeId, Long actorId, Role role) {
-        if (role != Role.ADMIN && role != Role.TECHNICIAN) {
-            throw new SecurityException("Only staff can assign tickets");
+        try {
+            if (role != Role.ADMIN && role != Role.TECHNICIAN) {
+                throw new SecurityException("Only staff can assign tickets. Your role is: " + role);
+            }
+            
+            Ticket t = ticketRepository.findById(ticketId)
+                    .orElseThrow(() -> new IllegalArgumentException("Ticket not found"));
+                    
+            User assignee = userRepository.findById(assigneeId)
+                    .orElseThrow(() -> new IllegalArgumentException("Assignee not found in database"));
+            
+            t.setAssigneeId(assignee.getId());
+            t.setStatus(TicketStatus.IN_PROGRESS); 
+            ticketRepository.save(t);
+            
+            notifyStatusChange(t, actorId, "Assigned to Technician");
+            
+            System.out.println("✅ Ticket successfully assigned and saved to database!");
+            return TicketResponse.from(t);
+            
+        } catch (Exception e) {
+            System.err.println("\n=============================================");
+            System.err.println("💥 DATABASE SAVE FAILED (ASSIGN) 💥");
+            System.err.println("Error Message: " + e.getMessage());
+            e.printStackTrace();
+            System.err.println("=============================================\n");
+            throw e;
         }
-        Ticket t = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new IllegalArgumentException("Ticket not found"));
-        User assignee = userRepository.findById(assigneeId)
-                .orElseThrow(() -> new IllegalArgumentException("Assignee not found"));
-        t.setAssigneeId(assignee.getId());
-        t.setStatus(TicketStatus.IN_PROGRESS); 
-        ticketRepository.save(t);
-        notifyStatusChange(t, actorId, "Assigned to Technician");
-        return TicketResponse.from(t);
     }
 
     @Transactional
