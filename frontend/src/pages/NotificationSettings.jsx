@@ -150,14 +150,12 @@ const NotificationSettings = () => {
             </div>
 
             <div style={{
-                marginTop: 28,
-                padding: 16,
-                background: 'rgba(59, 130, 246, 0.1)',
-                border: '1px solid rgba(59, 130, 246, 0.2)',
+                marginTop: 28, padding: 16,
+                background: '#f5f5f5',
+                border: '1px solid #dddddd',
                 borderRadius: 10,
-                color: '#3b82f6',
-                fontSize: 13,
-                lineHeight: 1.6
+                color: '#444444',
+                fontSize: 13, lineHeight: 1.6
             }}>
                 <strong>ℹ️ About these notifications:</strong>
                 <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>

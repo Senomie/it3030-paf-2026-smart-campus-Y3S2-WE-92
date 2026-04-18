@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../api/axiosConfig';
 import { AuthContext } from '../context/AuthContext';
+import { NotificationContext } from '../context/NotificationContext';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const Catalogue = () => {
     const { user } = useContext(AuthContext);
+    const { showNotification } = useContext(NotificationContext);
     const [resources, setResources] = useState([]);
     const [typeFilter, setTypeFilter] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -14,6 +17,7 @@ const Catalogue = () => {
     const [editId, setEditId] = useState(null);
     const [newRes, setNewRes] = useState({ name: '', type: 'LECTURE_HALL', capacity: 0, location: '', status: 'ACTIVE', startTime: '08:00', endTime: '18:00' });
     const [resImage, setResImage] = useState(null);
+    const [confirmDialog, setConfirmDialog] = useState({ open: false, resourceId: null });
 
     const fetchResources = async () => {
         try {
@@ -49,10 +53,10 @@ const Catalogue = () => {
 
             if (isEditing) {
                 await api.put(`/resources/${editId}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-                alert('Facility updated successfully!');
+                showNotification('Facility updated successfully!', 'success');
             } else {
                 await api.post('/resources', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-                alert('Facility added successfully!');
+                showNotification('Facility added successfully!', 'success');
             }
 
             setShowAddForm(false);
@@ -61,7 +65,7 @@ const Catalogue = () => {
             setResImage(null);
             fetchResources();
         } catch(err) { 
-            alert('Failed to save resource.'); 
+            showNotification('Failed to save resource.', 'error'); 
         }
     };
 
@@ -73,14 +77,18 @@ const Catalogue = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleDeleteClick = async (id) => {
-        if(window.confirm("Delete this facility? This cannot be undone.")) {
-            try {
-                await api.delete(`/resources/${id}`);
-                fetchResources();
-            } catch(e) { 
-                alert("Failed to delete resource"); 
-            }
+    const handleDeleteClick = (id) => {
+        setConfirmDialog({ open: true, resourceId: id });
+    };
+
+    const handleDeleteConfirm = async () => {
+        const id = confirmDialog.resourceId;
+        setConfirmDialog({ open: false, resourceId: null });
+        try {
+            await api.delete(`/resources/${id}`);
+            fetchResources();
+        } catch(e) { 
+            showNotification('Failed to delete resource.', 'error'); 
         }
     };
 
@@ -100,8 +108,8 @@ const Catalogue = () => {
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '600px',
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
-            borderRadius: '16px',
+            background: '#f5f5f5',
+            borderRadius: '12px',
             padding: '40px 20px'
         }}>
             <div style={{ textAlign: 'center' }}>
@@ -118,34 +126,28 @@ const Catalogue = () => {
                     {/* Outer rotating ring */}
                     <div style={{
                         position: 'absolute',
-                        width: '120px',
-                        height: '120px',
+                        width: '120px', height: '120px',
                         borderRadius: '50%',
-                        border: '3px solid transparent',
-                        borderTop: '3px solid var(--primary)',
-                        borderRight: '3px solid rgba(59, 130, 246, 0.3)',
+                        border: '3px solid #eeeeee',
+                        borderTop: '3px solid #1a1a1a',
                         animation: 'spin 1.5s linear infinite'
                     }}></div>
 
                     {/* Middle rotating ring (opposite direction) */}
                     <div style={{
                         position: 'absolute',
-                        width: '90px',
-                        height: '90px',
+                        width: '90px', height: '90px',
                         borderRadius: '50%',
-                        border: '3px solid transparent',
-                        borderBottom: '3px solid #8B5CF6',
-                        borderLeft: '3px solid rgba(139, 92, 246, 0.3)',
+                        border: '3px solid #eeeeee',
+                        borderBottom: '3px solid #555555',
                         animation: 'spin-reverse 2s linear infinite'
                     }}></div>
 
                     {/* Center dot */}
                     <div style={{
-                        width: '20px',
-                        height: '20px',
+                        width: '16px', height: '16px',
                         borderRadius: '50%',
-                        background: 'var(--primary)',
-                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)'
+                        background: '#1a1a1a',
                     }}></div>
                 </div>
 
@@ -188,17 +190,12 @@ const Catalogue = () => {
                 {/* Loading bars */}
                 <div style={{ marginTop: '25px', display: 'flex', gap: '6px', justifyContent: 'center' }}>
                     {[...Array(3)].map((_, i) => (
-                        <div
-                            key={i}
-                            style={{
-                                width: '8px',
-                                height: '40px',
-                                borderRadius: '4px',
-                                background: `linear-gradient(180deg, var(--primary) 0%, rgba(59, 130, 246, 0.3) 100%)`,
-                                animation: `pulse-height 1.6s ease-in-out infinite`,
-                                animationDelay: `${i * 0.2}s`
-                            }}
-                        ></div>
+                        <div key={i} style={{
+                            width: '6px', height: '32px', borderRadius: '3px',
+                            background: '#cccccc',
+                            animation: `pulse-height 1.6s ease-in-out infinite`,
+                            animationDelay: `${i * 0.2}s`
+                        }}></div>
                     ))}
                 </div>
             </div>
@@ -242,11 +239,11 @@ const Catalogue = () => {
             
             {/* Filter & Controls */}
             <div style={{ 
-                marginBottom: '30px', 
-                padding: '20px', 
-                background: 'var(--surface)',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
-                borderRadius: '16px',
+                marginBottom: '24px', 
+                padding: '16px 20px', 
+                background: '#ffffff',
+                border: '1px solid #dddddd',
+                borderRadius: '10px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -281,22 +278,22 @@ const Catalogue = () => {
                 </select>
 
                 {/* View Toggle */}
-                <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <div style={{ display: 'flex', background: '#f0f0f0', padding: '3px', borderRadius: '8px', border: '1px solid #dddddd' }}>
                     {['grid', 'list'].map(mode => (
                         <button 
                             key={mode}
                             onClick={() => setViewMode(mode)}
                             style={{ 
-                                padding: '8px 16px', 
+                                padding: '7px 14px', 
                                 border: 'none', 
-                                borderRadius: '8px', 
+                                borderRadius: '6px', 
                                 cursor: 'pointer', 
                                 fontSize: '12px', 
                                 fontWeight: '700',
                                 textTransform: 'capitalize',
-                                background: viewMode === mode ? 'var(--primary)' : 'transparent',
-                                color: viewMode === mode ? 'white' : 'var(--text-muted)',
-                                transition: 'all 0.2s'
+                                background: viewMode === mode ? '#1a1a1a' : 'transparent',
+                                color: viewMode === mode ? '#ffffff' : '#888888',
+                                transition: 'all 0.15s'
                             }}
                         >
                             {mode === 'grid' ? '◊' : '≡'} {mode}
@@ -313,16 +310,15 @@ const Catalogue = () => {
                             setNewRes({ name: '', type: 'LECTURE_HALL', capacity: 0, location: '', status: 'ACTIVE', startTime: '08:00', endTime: '18:00' }); 
                         }
                     }} style={{ 
-                        padding: '10px 20px', 
-                        background: 'var(--primary)', 
+                        padding: '9px 18px', 
+                        background: '#16a34a', 
                         color: 'white', 
                         border: 'none', 
-                        borderRadius: '10px', 
+                        borderRadius: '8px', 
                         cursor: 'pointer', 
                         fontWeight: '700', 
                         fontSize: '13px',
-                        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                        transition: 'all 0.2s'
+                        transition: 'all 0.15s'
                     }}>
                         + Add Facility
                     </button>
@@ -386,11 +382,11 @@ const Catalogue = () => {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '15px' }}>
-                            <button type="submit" style={{ flex: 2, padding: '12px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: '700', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' }}>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button type="submit" style={{ flex: 2, padding: '11px', background: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '700' }}>
                                 {isEditing ? 'Update' : 'Create'} Facility
                             </button>
-                            <button type="button" onClick={() => setShowAddForm(false)} style={{ flex: 1, padding: '12px', background: 'var(--surface-light)', color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: '700' }}>
+                            <button type="button" onClick={() => setShowAddForm(false)} style={{ flex: 1, padding: '11px', background: '#ffffff', color: '#555555', border: '1.5px solid #cccccc', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '700' }}>
                                 Cancel
                             </button>
                         </div>
@@ -451,14 +447,14 @@ const Catalogue = () => {
                                     <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
                                         {user?.role === 'ROLE_USER' && res.status === 'ACTIVE' && (
                                             <>
-                                                <button onClick={() => window.location.href=`/book/${res.id}`} style={{ flex: 1, padding: '8px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>Book</button>
-                                                <button onClick={() => window.location.href=`/report/${res.id}`} style={{ flex: 1, padding: '8px', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>Report</button>
+                                                <button onClick={() => window.location.href=`/book/${res.id}`} style={{ flex: 1, padding: '7px', background: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>Book</button>
+                                                <button onClick={() => window.location.href=`/report/${res.id}`} style={{ flex: 1, padding: '7px', background: '#dc2626', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>Report</button>
                                             </>
                                         )}
                                         {user?.role === 'ROLE_ADMIN' && (
                                             <>
-                                                <button onClick={() => handleEditClick(res)} style={{ flex: 1, padding: '8px', background: 'var(--warning)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>Edit</button>
-                                                <button onClick={() => handleDeleteClick(res.id)} style={{ flex: 1, padding: '8px', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>Delete</button>
+                                                <button onClick={() => handleEditClick(res)} style={{ flex: 1, padding: '7px', background: '#555555', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>Edit</button>
+                                                <button onClick={() => handleDeleteClick(res.id)} style={{ flex: 1, padding: '7px', background: '#dc2626', color: '#ffffff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '700', fontSize: '11px' }}>Delete</button>
                                             </>
                                         )}
                                     </div>
@@ -469,6 +465,16 @@ const Catalogue = () => {
                 </div>
             )}
             {!loading && resources.length === 0 && <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>📭 No facilities found</div>}
+
+            <ConfirmDialog
+                open={confirmDialog.open}
+                title="Delete Facility"
+                message="Are you sure you want to delete this facility? This action cannot be undone."
+                confirmLabel="Delete"
+                danger={true}
+                onConfirm={handleDeleteConfirm}
+                onCancel={() => setConfirmDialog({ open: false, resourceId: null })}
+            />
         </div>
     );
 };

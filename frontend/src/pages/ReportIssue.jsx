@@ -91,7 +91,7 @@ const ReportIssue = () => {
             </button>
 
             <div className="premium-card" style={{ padding: '0', overflow: 'hidden' }}>
-                <div style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', padding: '40px', color: 'white' }}>
+                <div style={{ background: '#1a1a1a', padding: '36px 40px', color: 'white' }}>
                     <div style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '10px', opacity: 0.8 }}>Incident Reporting</div>
                     <h2 style={{ margin: 0, fontSize: '32px', letterSpacing: '-1px' }}>{resource.name}</h2>
                     <p style={{ margin: '15px 0 0 0', opacity: 0.9, fontSize: '14px', lineHeight: '1.5' }}>

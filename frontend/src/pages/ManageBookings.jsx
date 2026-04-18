@@ -1,11 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
 import api from '../api/axiosConfig';
 import { NotificationContext } from '../context/NotificationContext';
+import PromptDialog from '../components/PromptDialog';
 
 const ManageBookings = () => {
     const { showNotification } = useContext(NotificationContext);
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [rejectDialog, setRejectDialog] = useState({ open: false, bookingId: null });
 
     const load = async () => {
         setLoading(true);
@@ -24,8 +26,7 @@ const ManageBookings = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const decide = async (id, approved) => {
-        const reason = approved ? null : window.prompt('Rejection reason (optional):') || '';
+    const decide = async (id, approved, reason = null) => {
         try {
             await api.patch(`/bookings/${id}/decision`, { approved, reason: reason || null });
             showNotification(approved ? 'Booking approved.' : 'Booking rejected.', 'success');
@@ -33,6 +34,10 @@ const ManageBookings = () => {
         } catch (e) {
             showNotification(e.response?.data?.error || 'Update failed', 'error');
         }
+    };
+
+    const handleReject = (id) => {
+        setRejectDialog({ open: true, bookingId: id });
     };
 
     if (loading) {
@@ -58,12 +63,26 @@ const ManageBookings = () => {
                             </div>
                             <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
                                 <button type="button" onClick={() => decide(b.id, true)} style={btnPrimary}>Approve</button>
-                                <button type="button" onClick={() => decide(b.id, false)} style={btnDanger}>Reject</button>
+                                <button type="button" onClick={() => handleReject(b.id)} style={btnDanger}>Reject</button>
                             </div>
                         </div>
                     ))}
                 </div>
             )}
+
+            <PromptDialog
+                open={rejectDialog.open}
+                title="Reject Booking"
+                message="Please provide a reason for rejection (optional)."
+                placeholder="Rejection reason..."
+                confirmLabel="Reject"
+                onConfirm={(reason) => {
+                    const id = rejectDialog.bookingId;
+                    setRejectDialog({ open: false, bookingId: null });
+                    decide(id, false, reason);
+                }}
+                onCancel={() => setRejectDialog({ open: false, bookingId: null })}
+            />
         </div>
     );
 };
@@ -72,7 +91,7 @@ const btnPrimary = {
     padding: '10px 16px',
     borderRadius: 10,
     border: 'none',
-    background: 'var(--primary)',
+    background: '#16a34a',
     color: 'white',
     fontWeight: 700,
     cursor: 'pointer',
@@ -80,9 +99,9 @@ const btnPrimary = {
 
 const btnDanger = {
     ...btnPrimary,
-    background: 'rgba(239, 68, 68, 0.25)',
-    color: '#fecaca',
-    border: '1px solid rgba(239, 68, 68, 0.4)',
+    background: '#dc2626',
+    color: '#ffffff',
+    border: 'none',
 };
 
 export default ManageBookings;
