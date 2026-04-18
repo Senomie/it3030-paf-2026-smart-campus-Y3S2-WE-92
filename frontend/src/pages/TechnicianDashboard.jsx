@@ -13,12 +13,11 @@ const TechnicianDashboard = () => {
 
     const fetchTickets = () => {
         setLoading(true);
-        // FIX 1: The correct backend route for technicians is /desk
         api.get('/tickets/desk').then(res => {
             setTimeout(() => {
                 setTickets(res.data);
                 setLoading(false);
-            }, 1000); // Reduced to 1s so you don't have to wait 3s every time
+            }, 1000); 
         }).catch(err => {
             console.error(err);
             setLoading(false);
@@ -121,11 +120,9 @@ const TechnicianDashboard = () => {
                                 <tr key={t.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background-color 0.2s' }}>
                                     <td style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '14px' }}>#{t.id}</td>
                                     <td style={{ padding: '20px 24px' }}>
-                                        {/* FIX 2: Use the synthesized Title we created during creation */}
-                                        <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '15px' }}>{t.title}</div>
-                                        {/* FIX 3: Removed category/priority destructuring, showing the description block directly */}
+                                        <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '15px' }}>{t.title || 'Untitled Incident'}</div>
                                         <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px', whiteSpace: 'pre-line' }}>
-                                            {t.description.length > 60 ? t.description.substring(0, 60) + '...' : t.description}
+                                            {t.description ? (t.description.length > 60 ? t.description.substring(0, 60) + '...' : t.description) : 'No description provided.'}
                                         </div>
                                     </td>
                                     <td style={{ padding: '20px 24px' }}>
@@ -134,7 +131,7 @@ const TechnicianDashboard = () => {
                                             color: t.status === 'RESOLVED' ? '#10b981' : t.status === 'OPEN' ? '#ef4444' : '#f59e0b',
                                             border: `1px solid ${t.status === 'RESOLVED' ? 'rgba(16, 185, 129, 0.2)' : t.status === 'OPEN' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`
                                         }}>
-                                            {t.status.replace('_', ' ')}
+                                            {t.status ? t.status.replace('_', ' ') : 'UNKNOWN'}
                                         </span>
                                     </td>
                                     <td style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '14px' }}>

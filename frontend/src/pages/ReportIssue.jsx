@@ -57,8 +57,6 @@ const ReportIssue = () => {
                 for (const file of files) {
                     const fd = new FormData();
                     fd.append('file', file); 
-                    
-                    // ⭐ THE FIX: Removed the manual headers so the browser can attach the boundary properly!
                     await api.post(`/tickets/${ticketId}/attachments`, fd);
                 }
                 showNotification('Incident Ticket and attachments submitted successfully!', 'success');
@@ -72,6 +70,13 @@ const ReportIssue = () => {
         
         setIsSubmitting(false);
         navigate('/dashboard');
+    };
+
+    // Helper function to handle removing a specific image preview
+    const removeFile = (indexToRemove, e) => {
+        e.preventDefault();
+        e.stopPropagation(); // Stops the file browser from opening when clicking the X
+        setFiles(files.filter((_, index) => index !== indexToRemove));
     };
 
     if (!resource) return (
@@ -137,22 +142,53 @@ const ReportIssue = () => {
                                    onChange={e => setFormData({...formData, contactDetails: e.target.value})} />
                         </div>
 
+                        {/* ⭐ UPDATED IMAGE UPLOAD PREVIEW COMPONENT ⭐ */}
                         <div>
                             <label className="form-label">Evidence Attachments (Optional, max 3)</label>
                             <div style={{ 
-                                position: 'relative', border: '2px dashed var(--border)', padding: '20px', 
+                                position: 'relative', border: '2px dashed var(--border)', padding: '25px', 
                                 borderRadius: '16px', textAlign: 'center', transition: 'all 0.2s',
-                                background: 'rgba(255,255,255,0.02)'
+                                background: 'rgba(255,255,255,0.02)', minHeight: '120px', 
+                                display: 'flex', flexDirection: 'column', justifyContent: 'center'
                             }}>
-                                <input type="file" multiple accept="image/*" onChange={e => setFiles(Array.from(e.target.files))}
-                                       style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
-                                <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
-                                    {files.length > 0 ? (
-                                        <span style={{color: 'var(--primary)', fontWeight: 'bold'}}>{files.length} file(s) selected</span>
-                                    ) : (
-                                        'Click or drag images here to upload'
-                                    )}
-                                </div>
+                                {/* Only show the clickable input file area if we haven't hit the limit */}
+                                {files.length < 3 && (
+                                    <input type="file" multiple accept="image/*" title="Upload Photos"
+                                        onChange={e => {
+                                            const newFiles = Array.from(e.target.files);
+                                            if (files.length + newFiles.length > 3) {
+                                                showNotification('Maximum 3 attachments allowed.', 'error');
+                                            } else {
+                                                setFiles([...files, ...newFiles].slice(0, 3));
+                                            }
+                                            e.target.value = ''; // Reset input
+                                        }}
+                                        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 1 }} 
+                                    />
+                                )}
+
+                                {files.length > 0 ? (
+                                    <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative', zIndex: 2 }}>
+                                        {files.map((file, idx) => (
+                                            <div key={idx} style={{ position: 'relative' }}>
+                                                {/* Render the Thumbnail */}
+                                                <img src={URL.createObjectURL(file)} alt={`preview-${idx}`} 
+                                                     style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px', border: '2px solid var(--primary)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} 
+                                                />
+                                                {/* Red X Button */}
+                                                <button type="button" onClick={(e) => removeFile(idx, e)}
+                                                        style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)', zIndex: 10 }}>
+                                                    &times;
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '14px', pointerEvents: 'none' }}>
+                                        <span style={{ fontSize: '28px', display: 'block', marginBottom: '8px' }}>📸</span>
+                                        Click or drag up to 3 images here
+                                    </div>
+                                )}
                             </div>
                         </div>
 

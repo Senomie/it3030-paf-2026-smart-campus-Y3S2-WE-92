@@ -161,6 +161,27 @@ public class TicketService {
         }
     }
 
+    // ⭐ NEW: Fetch Attachments from Database so React can display them ⭐
+    @Transactional(readOnly = true)
+    public List<java.util.Map<String, Object>> getAttachments(Long ticketId, Long userId, Role role) {
+        Ticket t = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new IllegalArgumentException("Ticket not found"));
+        
+        assertTicketAccess(t, userId, role);
+
+        String sql = "SELECT id, file_name, content_type, data FROM ticket_attachment WHERE ticket_id = ?";
+        
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            java.util.Map<String, Object> attachment = new java.util.HashMap<>();
+            attachment.put("id", rs.getLong("id"));
+            attachment.put("fileName", rs.getString("file_name"));
+            attachment.put("contentType", rs.getString("content_type"));
+            // Spring automatically converts this byte[] to Base64 in the JSON response
+            attachment.put("data", rs.getBytes("data")); 
+            return attachment;
+        }, ticketId);
+    }
+
     private void assertTicketAccess(Ticket t, Long userId, Role role) {
         boolean staff = role == Role.ADMIN || role == Role.TECHNICIAN;
         boolean reporter = userId.equals(t.getReporterId());

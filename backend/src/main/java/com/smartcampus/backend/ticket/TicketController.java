@@ -120,6 +120,15 @@ public class TicketController {
         ticketService.addAttachment(id, c.userId(), c.role(), file);
     }
 
+    // ⭐ NEW: Fetch Attachments Endpoint to display images ⭐
+    @GetMapping("/{id}/attachments")
+    public List<java.util.Map<String, Object>> getTicketAttachments(
+            @PathVariable Long id,
+            Authentication auth) {
+        Caller c = Caller.from(auth, userRepository);
+        return ticketService.getAttachments(id, c.userId(), c.role());
+    }
+
     private record Caller(Long userId, Role role) {
         static Caller from(Authentication auth, UserRepository users) {
             Long id = (Long) auth.getPrincipal();
