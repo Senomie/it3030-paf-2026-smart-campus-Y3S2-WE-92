@@ -13,6 +13,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
 	List<Booking> findByStatusOrderByStartTimeAsc(BookingStatus status);
 
+	List<Booking> findByResourceLabel(String resourceLabel);
+	List<Booking> findAllByOrderByStartTimeDesc();
+	
+    List<Booking> findByStatusOrderByStartTimeDesc(BookingStatus status);
+
 	@Query("""
 			select count(b) from Booking b
 			where b.resourceLabel = :resource
