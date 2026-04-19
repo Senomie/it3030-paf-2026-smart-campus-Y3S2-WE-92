@@ -29,6 +29,12 @@ public class Booking {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+    @Column(name = "full_name", length = 200)
+    private String fullName;
+
+    @Column(name = "phone_number", length = 50)
+    private String phoneNumber;
+	
 	@Column(name = "user_id", nullable = false)
 	private Long userId;
 
@@ -50,4 +56,9 @@ public class Booking {
 
 	@Column(name = "admin_reason", length = 2000)
 	private String adminReason;
+
+	@Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private BookingRecurrence recurrence = BookingRecurrence.SINGLE;
 }

@@ -71,12 +71,14 @@ const Notifications = () => {
             <div style={{ textAlign: 'center', marginTop: 48, padding: '0 20px' }}>
                 <div style={{ marginBottom: 16 }}>
                     <div style={{
-                        width: 40, height: 40,
-                        border: '3px solid #eeeeee',
-                        borderTop: '3px solid #1a1a1a',
+                        width: 40,
+                        height: 40,
+                        border: '3px solid rgba(59,130,246,0.2)',
+                        borderTop: '3px solid rgb(59,130,246)',
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite',
-                        margin: '0 auto', marginBottom: 16
+                        margin: '0 auto',
+                        marginBottom: 16
                     }} />
                 </div>
                 <p style={{ color: 'var(--text-muted)' }}>Loading notifications...</p>
