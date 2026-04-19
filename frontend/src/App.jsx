@@ -12,6 +12,7 @@ import Notifications from './pages/Notifications';
 import NotificationSettings from './pages/NotificationSettings';
 import Navbar from './components/Navbar';
 import RoleRoute from './components/RoleRoute';
+import BookingHistory from "./pages/BookingHistory";
 import AdminUsers from './pages/AdminUsers';
 
 const PrivateRoute = ({ children }) => {
@@ -52,6 +53,11 @@ function App() {
                     <Route path="/admin/bookings" element={
                         <PrivateRoute>
                             <ManageBookings />
+                        </PrivateRoute>
+                    } />
+                    <Route path="/bookings/history" element={
+                        <PrivateRoute>
+                            <BookingHistory />
                         </PrivateRoute>
                     } />
                     <Route path="/admin/users" element={

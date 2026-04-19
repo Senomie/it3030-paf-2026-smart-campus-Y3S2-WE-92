@@ -48,14 +48,6 @@ const RECURRENCE_OPTIONS = [
     { value: 'WEEKLY', label: 'Weekly' },
 ];
 
-// Duration preset buttons: label → minutes to add from start
-const DURATION_PRESETS = [
-    { label: '30 min', mins: 30 },
-    { label: '1 hr',   mins: 60 },
-    { label: '2 hr',   mins: 120 },
-    { label: '4 hr',   mins: 240 },
-];
-
 const addMinutes = (isoStr, mins) => {
     const d = new Date(isoStr);
     d.setMinutes(d.getMinutes() + mins);
@@ -122,7 +114,6 @@ const BookResource = () => {
         }
     };
 
-    // When start changes: auto-set end to start + 1 hour
     const handleStartChange = (e) => {
         const val = e.target.value;
         setStartTime(val);
@@ -142,16 +133,6 @@ const BookResource = () => {
         }
     };
 
-    // Preset button: set end time relative to start
-    const applyPreset = (mins) => {
-        if (!startTime) {
-            showNotification('Please select a start time first', 'error');
-            return;
-        }
-        setEndTime(addMinutes(startTime, mins));
-        setTimeError('');
-    };
-
     const submit = async (e) => {
         e.preventDefault();
 
@@ -164,6 +145,7 @@ const BookResource = () => {
             return;
         }
 
+        if (submitting) return;
         setSubmitting(true);
         try {
             await api.post('/bookings', {
@@ -181,18 +163,18 @@ const BookResource = () => {
             showNotification('Booking request submitted (PENDING).', 'success');
             navigate('/dashboard');
         } catch (err) {
-            showNotification(err.response?.data?.error || err.message || 'Booking failed', 'error');
+            const errorMsg = err.response?.data?.error || err.message || 'Booking failed';
+            if (err.response?.status === 409) {
+                showNotification('This time slot is already booked. Please select a different time.', 'error');
+            } else {
+                showNotification(errorMsg, 'error');
+            }
         } finally {
             setSubmitting(false);
         }
     };
 
     const duration = getDuration(startTime, endTime);
-
-    // Which preset is currently active (exact match)
-    const activePreset = startTime
-        ? DURATION_PRESETS.find(p => addMinutes(startTime, p.mins) === endTime)?.mins ?? null
-        : null;
 
     return (
         <div style={styles.page}>
@@ -272,7 +254,7 @@ const BookResource = () => {
                         />
                     </div>
 
-                    {/* End Time + presets */}
+                    {/* End Time */}
                     <div style={styles.field}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                             <label style={{ ...styles.label, margin: 0 }}>End</label>
@@ -286,26 +268,6 @@ const BookResource = () => {
                                 </span>
                             )}
                         </div>
-
-                        {/* Duration preset buttons */}
-                        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                            {DURATION_PRESETS.map(({ label, mins }) => (
-                                <button
-                                    key={mins} type="button"
-                                    onClick={() => applyPreset(mins)}
-                                    style={{
-                                        flex: 1, padding: '6px 0', fontSize: 12, fontWeight: 600,
-                                        borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
-                                        border: activePreset === mins ? '1.5px solid #16a34a' : '1.5px solid #e5e7eb',
-                                        background: activePreset === mins ? '#f0fdf4' : '#f5f6f8',
-                                        color: activePreset === mins ? '#16a34a' : '#555',
-                                    }}
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-
                         <input
                             type="datetime-local" required
                             min={startTime || minDateTime}
@@ -313,11 +275,6 @@ const BookResource = () => {
                             style={styles.input}
                         />
                         {timeError && <p style={styles.errorText}>{timeError}</p>}
-                        {!timeError && !duration && startTime && (
-                            <p style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
-                                End time auto-set to 1 hour after start — adjust above or pick a preset
-                            </p>
-                        )}
                     </div>
 
                     {/* Submit */}

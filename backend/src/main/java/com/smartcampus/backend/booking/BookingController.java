@@ -5,10 +5,12 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.smartcampus.backend.booking.dto.BookingDecisionRequest;
 import com.smartcampus.backend.booking.dto.BookingResponse;
 import com.smartcampus.backend.booking.dto.CreateBookingRequest;
+import com.smartcampus.backend.booking.dto.UpdateBookingRequest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,40 +29,58 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BookingController {
 
-	private final BookingService bookingService;
+    private final BookingService bookingService;
 
-	@PostMapping
-	public BookingResponse create(Authentication auth, @Valid @RequestBody CreateBookingRequest request) {
-		Long userId = (Long) auth.getPrincipal();
-		return bookingService.create(userId, request);
-	}
+    @PostMapping
+    public BookingResponse create(Authentication auth, @Valid @RequestBody CreateBookingRequest request) {
+        Long userId = (Long) auth.getPrincipal();
+        return bookingService.create(userId, request);
+    }
 
-	@GetMapping("/mine")
-	public List<BookingResponse> mine(Authentication auth) {
-		Long userId = (Long) auth.getPrincipal();
-		return bookingService.listMine(userId);
-	}
+    @GetMapping("/mine")
+    public List<BookingResponse> mine(Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        return bookingService.listMine(userId);
+    }
 
-	@GetMapping("/pending")
-	@PreAuthorize("hasRole('ADMIN')")
-	public List<BookingResponse> pending() {
-		return bookingService.listPending();
-	}
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<BookingResponse> pending() {
+        return bookingService.listPending();
+    }
 
-	@GetMapping
+    @GetMapping
     public ResponseEntity<?> getBookings(@RequestParam String resourceLabel) {
-    return ResponseEntity.ok(bookingService.getByResourceLabel(resourceLabel));
-  }
-     
-   @GetMapping("/all")
-   @PreAuthorize("hasRole('ADMIN')")
-   public ResponseEntity<List<BookingResponse>> getAll(
-   @RequestParam(required = false) BookingStatus status) {
-   return ResponseEntity.ok(bookingService.listAll(status));}
+        return ResponseEntity.ok(bookingService.getByResourceLabel(resourceLabel));
+    }
 
-	@PatchMapping("/{id}/decision")
-	@PreAuthorize("hasRole('ADMIN')")
-	public BookingResponse decide(@PathVariable Long id, @Valid @RequestBody BookingDecisionRequest request) {
-		return bookingService.decide(id, request.approved(), request.reason());
-	}
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<BookingResponse>> getAll(
+            @RequestParam(required = false) BookingStatus status) {
+        return ResponseEntity.ok(bookingService.listAll(status));
+    }
+
+    @PatchMapping("/{id}/decision")
+    @PreAuthorize("hasRole('ADMIN')")
+    public BookingResponse decide(@PathVariable Long id, @Valid @RequestBody BookingDecisionRequest request) {
+        return bookingService.decide(id, request.approved(), request.reason());
+    }
+
+    // User can update their own PENDING booking
+    @PutMapping("/{id}")
+    public BookingResponse update(Authentication auth,
+                                  @PathVariable Long id,
+                                  @Valid @RequestBody UpdateBookingRequest request) {
+        Long userId = (Long) auth.getPrincipal();
+        return bookingService.update(userId, id, request);
+    }
+
+    // User cancels their own booking (sets status = CANCELLED)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> cancel(Authentication auth, @PathVariable Long id) {
+        Long userId = (Long) auth.getPrincipal();
+        bookingService.cancel(userId, id);
+        return ResponseEntity.noContent().build();
+    }
 }
