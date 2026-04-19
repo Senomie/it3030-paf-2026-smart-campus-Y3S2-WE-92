@@ -18,6 +18,21 @@ const ReportIssue = () => {
         api.get(`/resources/${id}`).then(res => setResource(res.data)).catch(err => console.error(err));
     }, [id]);
 
+    // Validation helper functions
+    const isValidPhone = (phone) => {
+        const digitsOnly = phone.replace(/\D/g, '');
+        return digitsOnly.length === 10;
+    };
+
+    const isValidEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const isValidContactDetails = (contact) => {
+        return isValidPhone(contact) || isValidEmail(contact);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -25,6 +40,12 @@ const ReportIssue = () => {
             showNotification('Please fill in all required fields properly.', 'error');
             return;
         }
+
+        if (!isValidContactDetails(formData.contactDetails.trim())) {
+            showNotification('Please enter a valid phone number (10 digits) or email address.', 'error');
+            return;
+        }
+
         if (files.length > 3) {
             showNotification('Maximum 3 attachments allowed.', 'error');
             return;

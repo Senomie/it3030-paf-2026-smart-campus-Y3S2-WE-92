@@ -1,5 +1,6 @@
 package com.smartcampus.backend.ticket;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -38,6 +39,7 @@ public class TicketService {
                 .title(req.title().trim())
                 .description(req.description().trim())
                 .status(TicketStatus.OPEN)
+                .createdAt(LocalDateTime.now()) // ⭐ NEW: Start the clock!
                 .build();
         return TicketResponse.from(ticketRepository.save(t));
     }
@@ -83,12 +85,17 @@ public class TicketService {
         }
         TicketStatus newStatus = req.status();
         t.setStatus(newStatus);
+        
+        // ⭐ NEW: Stamp Resolution Time!
+        if (newStatus == TicketStatus.RESOLVED && t.getResolvedAt() == null) {
+            t.setResolvedAt(LocalDateTime.now());
+        }
+        
         ticketRepository.save(t);
         notifyStatusChange(t, actorId, formatStatus(newStatus));
         return TicketResponse.from(t);
     }
     
-    // ⭐ UPGRADED DIAGNOSTIC CLAIM SAVING ⭐
     @Transactional
     public TicketResponse assignTicket(Long ticketId, Long assigneeId, Long actorId, Role role) {
         try {
@@ -104,6 +111,12 @@ public class TicketService {
             
             t.setAssigneeId(assignee.getId());
             t.setStatus(TicketStatus.IN_PROGRESS); 
+            
+            // ⭐ NEW: Stamp First Response Time! (Only if it's the very first time being claimed)
+            if (t.getFirstRespondedAt() == null) {
+                t.setFirstRespondedAt(LocalDateTime.now());
+            }
+            
             ticketRepository.save(t);
             
             notifyStatusChange(t, actorId, "Assigned to Technician");
@@ -136,7 +149,6 @@ public class TicketService {
         return TicketCommentResponse.from(saved);
     }
 
-    // ⭐ UPGRADED DIAGNOSTIC ATTACHMENT SAVING ⭐
     @Transactional
     public void addAttachment(Long ticketId, Long userId, Role role, MultipartFile file) {
         Ticket t = ticketRepository.findById(ticketId)
@@ -161,7 +173,6 @@ public class TicketService {
         }
     }
 
-    // ⭐ NEW: Fetch Attachments from Database so React can display them ⭐
     @Transactional(readOnly = true)
     public List<java.util.Map<String, Object>> getAttachments(Long ticketId, Long userId, Role role) {
         Ticket t = ticketRepository.findById(ticketId)
@@ -176,10 +187,25 @@ public class TicketService {
             attachment.put("id", rs.getLong("id"));
             attachment.put("fileName", rs.getString("file_name"));
             attachment.put("contentType", rs.getString("content_type"));
-            // Spring automatically converts this byte[] to Base64 in the JSON response
             attachment.put("data", rs.getBytes("data")); 
             return attachment;
         }, ticketId);
+    }
+
+    @Transactional
+    public void deleteTicket(Long ticketId, Long userId, Role role) {
+        Ticket t = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new IllegalArgumentException("Ticket not found"));
+        
+        if (role != Role.ADMIN && role != Role.TECHNICIAN) {
+            throw new SecurityException("Only staff can delete tickets.");
+        }
+
+        String deleteAttachmentsSql = "DELETE FROM ticket_attachment WHERE ticket_id = ?";
+        jdbcTemplate.update(deleteAttachmentsSql, ticketId);
+
+        ticketRepository.delete(t);
+        System.out.println("🗑️ Ticket #" + ticketId + " has been completely deleted.");
     }
 
     private void assertTicketAccess(Ticket t, Long userId, Role role) {

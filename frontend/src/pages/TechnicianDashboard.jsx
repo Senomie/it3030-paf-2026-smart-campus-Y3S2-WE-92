@@ -41,11 +41,47 @@ const TechnicianDashboard = () => {
         const notes = prompt("Enter resolution notes (e.g., Fixed projector bulb):");
         if (notes) {
             try {
-                await api.put(`/tickets/${ticketId}/status`, { status: 'RESOLVED', resolutionNotes: notes });
+                await api.patch(`/tickets/${ticketId}/status`, { status: 'RESOLVED', resolutionNotes: notes });
                 fetchTickets();
                 showNotification('Ticket marked as resolved!', 'success');
-            } catch (err) { showNotification('Resolution Update Failed', 'error'); }
+            } catch (err) { 
+                console.error("Resolution Error:", err); 
+                showNotification('Resolution Update Failed', 'error'); 
+            }
         }
+    };
+
+    const deleteTicket = async (ticketId) => {
+        if (window.confirm("Are you sure you want to completely delete this ticket? This action cannot be undone.")) {
+            try {
+                await api.delete(`/tickets/${ticketId}`);
+                fetchTickets();
+                showNotification('Ticket deleted successfully!', 'success');
+            } catch (err) { 
+                console.error("Delete Error:", err);
+                showNotification('Failed to delete ticket', 'error'); 
+            }
+        }
+    };
+
+    // ⭐ NEW: TIME CALCULATION HELPERS ⭐
+    const formatTimeDiff = (start, end) => {
+        if (!start || !end) return null;
+        const diffMs = new Date(end) - new Date(start);
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 60) return `${diffMins}m`;
+        const hours = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+        return `${hours}h ${mins}m`;
+    };
+
+    const calculateOpenTime = (start) => {
+        if (!start) return null;
+        const diffMs = new Date() - new Date(start);
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 60) return `${diffMins}m`;
+        const hours = Math.floor(diffMins / 60);
+        return `${hours}h`;
     };
 
     const openCount = tickets.filter(t => t.status === 'OPEN').length;
@@ -119,12 +155,33 @@ const TechnicianDashboard = () => {
                             ) : tickets.map(t => (
                                 <tr key={t.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background-color 0.2s' }}>
                                     <td style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '14px' }}>#{t.id}</td>
+                                    
                                     <td style={{ padding: '20px 24px' }}>
                                         <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '15px' }}>{t.title || 'Untitled Incident'}</div>
                                         <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px', whiteSpace: 'pre-line' }}>
                                             {t.description ? (t.description.length > 60 ? t.description.substring(0, 60) + '...' : t.description) : 'No description provided.'}
                                         </div>
+                                        
+                                        {/* ⭐ NEW: SLA TIMERS DISPLAY ⭐ */}
+                                        <div style={{ marginTop: '10px', fontSize: '12px', display: 'flex', gap: '15px', fontWeight: '500' }}>
+                                            {t.firstRespondedAt && (
+                                                <span style={{ color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '3px 8px', borderRadius: '4px' }}>
+                                                    ⏱️ First Response: {formatTimeDiff(t.createdAt, t.firstRespondedAt)}
+                                                </span>
+                                            )}
+                                            {t.resolvedAt && (
+                                                <span style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '3px 8px', borderRadius: '4px' }}>
+                                                    ✅ Time to Resolve: {formatTimeDiff(t.createdAt, t.resolvedAt)}
+                                                </span>
+                                            )}
+                                            {!t.resolvedAt && (
+                                                <span style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)', padding: '3px 8px', borderRadius: '4px' }}>
+                                                    ⏳ Open Time: {calculateOpenTime(t.createdAt)}
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
+
                                     <td style={{ padding: '20px 24px' }}>
                                         <span style={{ fontWeight: '700', fontSize: '11px', padding: '6px 12px', borderRadius: '30px', letterSpacing: '0.5px',
                                             backgroundColor: t.status === 'RESOLVED' ? 'rgba(16, 185, 129, 0.1)' : t.status === 'OPEN' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
@@ -146,6 +203,9 @@ const TechnicianDashboard = () => {
                                             )}
                                             {t.status === 'IN_PROGRESS' && t.assigneeId === user.id && (
                                                 <button onClick={() => resolveTicket(t.id)} style={{ background: '#10b981', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '13px', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)' }}>Resolve</button>
+                                            )}
+                                            {t.status === 'RESOLVED' && (
+                                                <button onClick={() => deleteTicket(t.id)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '13px', boxShadow: '0 2px 4px rgba(239, 68, 68, 0.3)' }}>Delete</button>
                                             )}
                                         </div>
                                     </td>
