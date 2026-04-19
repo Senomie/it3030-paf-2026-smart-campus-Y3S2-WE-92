@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -69,7 +70,6 @@ public class TicketController {
         return ticketService.updateStatus(id, c.userId(), c.role(), request);
     }
 
-    // ⭐ UPGRADED DIAGNOSTIC CLAIM ENDPOINT ⭐
     @PutMapping("/{id}/assign/{assigneeId}")
     @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
     public TicketResponse assignTicket(
@@ -101,7 +101,6 @@ public class TicketController {
         return ticketService.addComment(id, c.userId(), c.role(), request);
     }
 
-    // ⭐ UPGRADED DIAGNOSTIC ATTACHMENT ENDPOINT ⭐
     @PostMapping("/{id}/attachments")
     public void uploadAttachment(
             @PathVariable Long id,
@@ -118,6 +117,22 @@ public class TicketController {
 
         Caller c = Caller.from(auth, userRepository);
         ticketService.addAttachment(id, c.userId(), c.role(), file);
+    }
+
+    @GetMapping("/{id}/attachments")
+    public List<java.util.Map<String, Object>> getTicketAttachments(
+            @PathVariable Long id,
+            Authentication auth) {
+        Caller c = Caller.from(auth, userRepository);
+        return ticketService.getAttachments(id, c.userId(), c.role());
+    }
+
+    // ⭐ NEW: SECURE DELETE ENDPOINT ⭐
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
+    public void deleteTicket(@PathVariable Long id, Authentication auth) {
+        Caller c = Caller.from(auth, userRepository);
+        ticketService.deleteTicket(id, c.userId(), c.role());
     }
 
     private record Caller(Long userId, Role role) {

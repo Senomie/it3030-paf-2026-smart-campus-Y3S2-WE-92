@@ -1,5 +1,7 @@
 package com.smartcampus.backend.ticket;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,23 +25,33 @@ import lombok.Setter;
 @Builder
 public class Ticket {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@Column(name = "reporter_id", nullable = false)
-	private Long reporterId;
+    @Column(name = "reporter_id", nullable = false)
+    private Long reporterId;
 
-	@Column(name = "assignee_id")
-	private Long assigneeId;
+    @Column(name = "assignee_id")
+    private Long assigneeId;
 
-	@Column(nullable = false)
-	private String title;
+    @Column(nullable = false)
+    private String title;
 
-	@Column(nullable = false, length = 4000)
-	private String description;
+    @Column(nullable = false, length = 4000)
+    private String description;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private TicketStatus status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TicketStatus status;
+
+    // ⭐ NEW: SLA TIMERS ⭐
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "first_responded_at")
+    private LocalDateTime firstRespondedAt;
+
+    @Column(name = "resolved_at")
+    private LocalDateTime resolvedAt;
 }
