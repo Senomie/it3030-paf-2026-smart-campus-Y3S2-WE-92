@@ -4,41 +4,30 @@ import { NotificationContext } from '../context/NotificationContext';
 const ToastContainer = () => {
     const { notifications, removeNotification } = useContext(NotificationContext);
 
-    const borderColor = (type) => {
-        if (type === 'error')   return '#dc2626';
-        if (type === 'warning') return '#d97706';
-        return '#1a1a1a';
-    };
-
     return (
-        <div style={{
-            position: 'fixed', bottom: '24px', right: '24px',
-            zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '10px',
-        }}>
+        <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '15px' }}>
             {notifications.map(note => (
                 <div key={note.id} style={{
-                    minWidth: '300px', maxWidth: '380px',
-                    background: '#ffffff',
-                    border: `1px solid ${borderColor(note.type)}`,
-                    borderLeft: `4px solid ${borderColor(note.type)}`,
-                    color: '#1a1a1a',
-                    padding: '14px 16px',
-                    borderRadius: '10px',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    fontWeight: 600, fontSize: '14px',
-                    animation: 'fadein 0.3s ease',
+                    minWidth: '280px', 
+                    background: note.type === 'error' ? '#e74c3c' : '#2ecc71', 
+                    color: 'white',
+                    padding: '16px 20px', 
+                    borderRadius: '8px', 
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    fontWeight: '600',
+                    fontSize: '15px',
+                    animation: 'fadein 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                 }}>
                     <span>{note.message}</span>
-                    <button
-                        onClick={() => removeNotification(note.id)}
-                        style={{
-                            background: 'transparent', border: 'none',
-                            color: '#aaaaaa', cursor: 'pointer',
-                            fontSize: '18px', marginLeft: '16px',
-                            lineHeight: 1, padding: '0 4px',
-                        }}
-                    >&times;</button>
+                    <button 
+                        onClick={() => removeNotification(note.id)} 
+                        style={{background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '20px', marginLeft: '20px', opacity: 0.8}}
+                    >
+                        &times;
+                    </button>
                 </div>
             ))}
         </div>

@@ -49,7 +49,7 @@ const AdminUsers = () => {
                         padding: '12px 20px',
                         borderRadius: 12,
                         border: 'none',
-                        background: '#16a34a',
+                        background: 'var(--primary)',
                         color: 'white',
                         fontWeight: 700,
                         cursor: 'pointer',

@@ -41,75 +41,81 @@ const Navbar = () => {
 
     const isActive = (path) => location.pathname === path;
 
+    const navStyle = {
+        background: 'rgba(255, 255, 255, 0.85)',       // white instead of dark
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        padding: '12px 30px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+        border: '1px solid rgba(0, 0, 0, 0.07)',       // subtle light border
+        position: 'sticky',
+        top: '15px',
+        margin: '0 20px 20px 20px',
+        borderRadius: '24px',
+        zIndex: 1000,
+        maxWidth: 'calc(100% - 40px)',
+    };
+
+    const linkStyle = (path) => {
+        const active = isActive(path);
+        return {
+            textDecoration: 'none',
+            color: active ? '#1a1a1a' : '#888888',      // dark active, grey inactive
+            fontWeight: active ? 700 : 500,
+            marginRight: '4px',
+            fontSize: '14px',
+            transition: 'all 0.15s',
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '8px 14px',
+            borderRadius: '10px',
+            background: active ? '#f0f0f0' : 'transparent',   // light grey pill for active
+            boxShadow: 'none',
+        };
+    };
+
     return (
-        <nav style={{
-            background: '#ffffff',
-            borderBottom: '1px solid #dddddd',
-            padding: '0 32px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'stretch',
-            height: '60px',
-            position: 'sticky',
-            top: 0,
-            zIndex: 1000,
-            boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
-        }}>
+        <nav style={navStyle}>
             {/* Left — logo + links */}
-            <div style={{ display: 'flex', alignItems: 'stretch' }}>
-                {/* Logo */}
+            <div style={{ display: 'flex', alignItems: 'center' }}>
                 <div
                     onClick={() => navigate('/dashboard')}
                     style={{
                         display: 'flex', alignItems: 'center', gap: '10px',
-                        marginRight: '36px', cursor: 'pointer', userSelect: 'none',
+                        marginRight: '24px', cursor: 'pointer', userSelect: 'none',
                     }}
                 >
                     <div style={{
-                        width: '32px', height: '32px', borderRadius: '8px',
+                        width: '34px', height: '34px', borderRadius: '9px',
                         background: '#1a1a1a', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', fontSize: '16px',
+                        justifyContent: 'center', fontSize: '18px',
                     }}>🏫</div>
                     <span style={{ fontWeight: 800, fontSize: '16px', color: '#1a1a1a', letterSpacing: '-0.5px' }}>
                         SmartCampus
                     </span>
                 </div>
 
-                {/* Nav links with underline-active style */}
-                {[
-                    { to: '/dashboard', label: 'Dashboard' },
-                    { to: '/catalogue', label: 'Facilities & Assets' },
-                    ...(user.role === 'ROLE_ADMIN' ? [
-                        { to: '/admin/bookings', label: 'Bookings' },
-                        { to: '/admin/users', label: 'Users' },
-                    ] : []),
-                    ...((user.role === 'ROLE_TECHNICIAN' || user.role === 'ROLE_ADMIN') ? [
-                        { to: '/technician/desk', label: 'Service Desk' },
-                    ] : []),
-                ].map(({ to, label }) => (
-                    <Link
-                        key={to}
-                        to={to}
-                        style={{
-                            display: 'inline-flex', alignItems: 'center',
-                            padding: '0 16px',
-                            fontSize: '14px',
-                            fontWeight: isActive(to) ? 700 : 500,
-                            color: isActive(to) ? '#1a1a1a' : '#888888',
-                            textDecoration: 'none',
-                            borderBottom: isActive(to) ? '2px solid #1a1a1a' : '2px solid transparent',
-                            transition: 'all 0.15s',
-                            marginBottom: '-1px',
-                        }}
-                        onMouseEnter={e => { if (!isActive(to)) e.currentTarget.style.color = '#333333'; }}
-                        onMouseLeave={e => { if (!isActive(to)) e.currentTarget.style.color = '#888888'; }}
-                    >
-                        {label}
-                    </Link>
-                ))}
+                <Link to="/dashboard" style={linkStyle('/dashboard')}>Dashboard</Link>
+                <Link to="/catalogue" style={linkStyle('/catalogue')}>Facilities & Assets</Link>
+
+                {user.role === 'ROLE_USER' && (
+                    <Link to="/bookings/history" style={linkStyle('/bookings/history')}>My Bookings</Link>
+                )}
+                {user.role === 'ROLE_ADMIN' && (
+                    <>
+                        <Link to="/admin/bookings" style={linkStyle('/admin/bookings')}>Bookings</Link>
+                        <Link to="/admin/users" style={linkStyle('/admin/users')}>Users</Link>
+                    </>
+                )}
+                {(user.role === 'ROLE_TECHNICIAN' || user.role === 'ROLE_ADMIN') && (
+                    <Link to="/technician/desk" style={linkStyle('/technician/desk')}>Service Desk</Link>
+                )}
             </div>
 
-            {/* Right — notification bell + user + sign out */}
+            {/* Right — bell + user + sign out */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {/* Bell */}
                 <Link
@@ -117,9 +123,8 @@ const Navbar = () => {
                     style={{
                         position: 'relative', display: 'inline-flex', alignItems: 'center',
                         justifyContent: 'center', width: '38px', height: '38px',
-                        borderRadius: '8px', background: unreadCount > 0 ? '#f5f5f5' : 'transparent',
-                        border: '1px solid transparent',
-                        textDecoration: 'none', fontSize: '18px',
+                        borderRadius: '10px', fontSize: '18px', textDecoration: 'none',
+                        background: unreadCount > 0 ? '#f5f5f5' : 'transparent',
                         transition: 'background 0.15s',
                     }}
                     onMouseEnter={e => e.currentTarget.style.background = '#f0f0f0'}
@@ -131,8 +136,7 @@ const Navbar = () => {
                             position: 'absolute', top: '4px', right: '4px',
                             background: '#dc2626', color: 'white',
                             fontSize: '9px', fontWeight: 800,
-                            padding: '1px 4px', borderRadius: '8px',
-                            lineHeight: 1.4,
+                            padding: '1px 4px', borderRadius: '8px', lineHeight: 1.4,
                         }}>{unreadCount}</span>
                     )}
                 </Link>
@@ -165,7 +169,7 @@ const Navbar = () => {
                     onClick={logout}
                     style={{
                         padding: '7px 16px', background: 'transparent',
-                        border: '1.5px solid #cccccc', borderRadius: '8px',
+                        border: '1.5px solid #cccccc', borderRadius: '10px',
                         cursor: 'pointer', fontWeight: 600, fontSize: '13px',
                         color: '#555555', transition: 'all 0.15s',
                     }}

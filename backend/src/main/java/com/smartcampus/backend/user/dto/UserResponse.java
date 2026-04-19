@@ -19,7 +19,7 @@ public class UserResponse {
 		return UserResponse.builder()
 				.id(user.getId())
 				.email(user.getEmail())
-				.name(user.getName())
+				.name(user.getFullName())
 				.role("ROLE_" + user.getRole().name())
 				.build();
 	}

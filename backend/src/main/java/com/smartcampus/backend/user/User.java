@@ -31,7 +31,7 @@ public class User {
 	private String email;
 
 	@Column(nullable = false)
-	private String name;
+	private String fullName;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)

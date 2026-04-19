@@ -13,15 +13,10 @@ const TechnicianDashboard = () => {
 
     const fetchTickets = () => {
         setLoading(true);
-        api.get('/tickets/desk').then(res => {
-            setTimeout(() => {
-                setTickets(res.data);
-                setLoading(false);
-            }, 1000); 
+
         }).catch(err => {
             console.error(err);
             setLoading(false);
-            showNotification('Failed to load tickets', 'error');
         });
     };
 
@@ -128,6 +123,7 @@ const TechnicianDashboard = () => {
                             <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)' }}>
                                 <th style={{ padding: '18px 24px', color: '#475569', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ID</th>
                                 <th style={{ padding: '18px 24px', color: '#475569', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Incident Details</th>
+                                <th style={{ padding: '18px 24px', color: '#475569', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Priority</th>
                                 <th style={{ padding: '18px 24px', color: '#475569', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>State</th>
                                 <th style={{ padding: '18px 24px', color: '#475569', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Technician</th>
                                 <th style={{ padding: '18px 24px', color: '#475569', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Action</th>
@@ -142,6 +138,7 @@ const TechnicianDashboard = () => {
                                             <div className="skeleton" style={{ width: '180px', height: '18px', marginBottom: '8px' }}></div>
                                             <div className="skeleton" style={{ width: '120px', height: '14px' }}></div>
                                         </td>
+                                        <td style={{ padding: '20px 24px' }}><div className="skeleton" style={{ width: '80px', height: '16px', borderRadius: '12px' }}></div></td>
                                         <td style={{ padding: '20px 24px' }}><div className="skeleton" style={{ width: '90px', height: '26px', borderRadius: '12px' }}></div></td>
                                         <td style={{ padding: '20px 24px' }}><div className="skeleton" style={{ width: '130px', height: '16px' }}></div></td>
                                         <td style={{ padding: '20px 24px' }}>
@@ -157,29 +154,7 @@ const TechnicianDashboard = () => {
                                     <td style={{ padding: '20px 24px', color: 'var(--text-muted)', fontWeight: '500', fontSize: '14px' }}>#{t.id}</td>
                                     
                                     <td style={{ padding: '20px 24px' }}>
-                                        <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '15px' }}>{t.title || 'Untitled Incident'}</div>
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px', whiteSpace: 'pre-line' }}>
-                                            {t.description ? (t.description.length > 60 ? t.description.substring(0, 60) + '...' : t.description) : 'No description provided.'}
-                                        </div>
-                                        
-                                        {/* ⭐ NEW: SLA TIMERS DISPLAY ⭐ */}
-                                        <div style={{ marginTop: '10px', fontSize: '12px', display: 'flex', gap: '15px', fontWeight: '500' }}>
-                                            {t.firstRespondedAt && (
-                                                <span style={{ color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '3px 8px', borderRadius: '4px' }}>
-                                                    ⏱️ First Response: {formatTimeDiff(t.createdAt, t.firstRespondedAt)}
-                                                </span>
-                                            )}
-                                            {t.resolvedAt && (
-                                                <span style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '3px 8px', borderRadius: '4px' }}>
-                                                    ✅ Time to Resolve: {formatTimeDiff(t.createdAt, t.resolvedAt)}
-                                                </span>
-                                            )}
-                                            {!t.resolvedAt && (
-                                                <span style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)', padding: '3px 8px', borderRadius: '4px' }}>
-                                                    ⏳ Open Time: {calculateOpenTime(t.createdAt)}
-                                                </span>
-                                            )}
-                                        </div>
+
                                     </td>
 
                                     <td style={{ padding: '20px 24px' }}>
@@ -192,7 +167,7 @@ const TechnicianDashboard = () => {
                                         </span>
                                     </td>
                                     <td style={{ padding: '20px 24px', color: 'var(--text-muted)', fontSize: '14px' }}>
-                                        {t.assigneeId ? `Tech ID: ${t.assigneeId}` : <span style={{color: 'var(--text-muted)', fontStyle: 'italic', opacity: 0.6}}>Unassigned</span>}
+                                        {t.technician ? t.technician.email.split('@')[0] : <span style={{color: 'var(--text-muted)', fontStyle: 'italic', opacity: 0.6}}>Unassigned</span>}
                                     </td>
                                     <td style={{ padding: '20px 24px' }}>
                                         <div style={{ display: 'flex', gap: '8px' }}>
@@ -201,7 +176,7 @@ const TechnicianDashboard = () => {
                                             {t.status === 'OPEN' && (
                                                 <button onClick={() => assignToMe(t.id)} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '13px', boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)' }}>Claim</button>
                                             )}
-                                            {t.status === 'IN_PROGRESS' && t.assigneeId === user.id && (
+                                            {t.status === 'IN_PROGRESS' && t.technician?.id === user.id && (
                                                 <button onClick={() => resolveTicket(t.id)} style={{ background: '#10b981', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '13px', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)' }}>Resolve</button>
                                             )}
                                             {t.status === 'RESOLVED' && (
